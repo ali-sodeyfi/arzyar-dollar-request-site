@@ -12,9 +12,16 @@ const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 const PORT = Number(process.env.PORT || 4321);
 const ADMIN_TOKEN = crypto.randomBytes(32).toString("hex");
 const ADMIN_PHONE = normalizePhone(process.env.ADMIN_PHONE || "00989128477764");
-const SMS_PROVIDER = (process.env.SMS_PROVIDER || (process.env.KAVENEGAR_API_KEY ? "kavenegar" : "mock")).toLowerCase();
+const SMS_PROVIDER = (
+  process.env.SMS_PROVIDER ||
+  (process.env.SMSIR_API_KEY ? "smsir" : process.env.KAVENEGAR_API_KEY ? "kavenegar" : "mock")
+).toLowerCase();
 const KAVENEGAR_API_KEY = process.env.KAVENEGAR_API_KEY || "";
 const KAVENEGAR_SENDER = process.env.KAVENEGAR_SENDER || process.env.SMS_SENDER || "";
+const SMSIR_API_KEY = process.env.SMSIR_API_KEY || "";
+const SMSIR_LINE_NUMBER = process.env.SMSIR_LINE_NUMBER || process.env.SMSIR_SENDER || process.env.SMS_SENDER || "";
+const SMSIR_VERIFY_TEMPLATE_ID = process.env.SMSIR_VERIFY_TEMPLATE_ID || "";
+const SMSIR_VERIFY_CODE_PARAMETER = process.env.SMSIR_VERIFY_CODE_PARAMETER || "Code";
 const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
 const SMS_WEBHOOK_TOKEN = process.env.SMS_WEBHOOK_TOKEN || "";
 const OTP_TTL_MS = Number(process.env.ADMIN_OTP_TTL_SECONDS || 300) * 1000;
@@ -170,6 +177,21 @@ function maskPhone(value) {
   return `${phone.slice(0, 4)}***${phone.slice(-4)}`;
 }
 
+function coerceSmsIrLineNumber(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  if (/^\d+$/.test(text)) {
+    const number = Number(text);
+    if (Number.isSafeInteger(number)) return number;
+  }
+  return text;
+}
+
+function extractSmsCode(message) {
+  const match = String(message || "").match(/\b(\d{4,8})\b/);
+  return match ? match[1] : "";
+}
+
 function normalizeUrl(value) {
   const raw = cleanText(value, 700);
   if (!raw) return "";
@@ -276,6 +298,82 @@ async function sendSms(receptor, message, reason = "notification") {
     }
     appendSmsLog({ ...baseLog, ok: true, status: response.status });
     return { ok: true, provider: "webhook" };
+  }
+
+  if (SMS_PROVIDER === "smsir" || SMS_PROVIDER === "sms.ir") {
+    if (!SMSIR_API_KEY) throw new Error("SMSIR_API_KEY تنظیم نشده است.");
+
+    const isAdminOtp = reason === "admin_login_otp";
+    const useVerifyTemplate = isAdminOtp && SMSIR_VERIFY_TEMPLATE_ID;
+    const endpoint = useVerifyTemplate
+      ? "https://api.sms.ir/v1/send/verify"
+      : "https://api.sms.ir/v1/send/bulk";
+    let body;
+
+    if (useVerifyTemplate) {
+      const templateId = Number(SMSIR_VERIFY_TEMPLATE_ID);
+      const code = extractSmsCode(message);
+      if (!Number.isSafeInteger(templateId) || templateId <= 0) {
+        throw new Error("SMSIR_VERIFY_TEMPLATE_ID معتبر نیست.");
+      }
+      if (!code) throw new Error("کد پیامکی برای قالب Verify پیدا نشد.");
+
+      body = {
+        mobile: phone,
+        templateId,
+        parameters: [
+          {
+            name: SMSIR_VERIFY_CODE_PARAMETER,
+            value: code
+          }
+        ]
+      };
+    } else {
+      const lineNumber = coerceSmsIrLineNumber(SMSIR_LINE_NUMBER);
+      if (!lineNumber) throw new Error("SMSIR_LINE_NUMBER تنظیم نشده است.");
+      body = {
+        lineNumber,
+        messageText: message,
+        mobiles: [phone]
+      };
+    }
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        "X-API-KEY": SMSIR_API_KEY
+      },
+      body: JSON.stringify(body)
+    });
+    const text = await response.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = null;
+    }
+    const hasApiStatus = payload && Object.prototype.hasOwnProperty.call(payload, "status");
+    const apiStatus = hasApiStatus ? Number(payload.status) : null;
+    if (!response.ok || (hasApiStatus && apiStatus !== 1)) {
+      appendSmsLog({
+        ...baseLog,
+        ok: false,
+        status: response.status,
+        apiStatus,
+        response: text.slice(0, 500)
+      });
+      throw new Error("ارسال پیامک SMS.ir ناموفق بود.");
+    }
+    appendSmsLog({
+      ...baseLog,
+      ok: true,
+      status: response.status,
+      apiStatus,
+      endpoint: useVerifyTemplate ? "verify" : "bulk"
+    });
+    return { ok: true, provider: "smsir", endpoint: useVerifyTemplate ? "verify" : "bulk" };
   }
 
   if (SMS_PROVIDER === "kavenegar") {
