@@ -7,11 +7,21 @@ const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "requests.json");
+const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 
 const PORT = Number(process.env.PORT || 4321);
-const ADMIN_PIN = process.env.ADMIN_PIN || "2468";
 const ADMIN_TOKEN = crypto.randomBytes(32).toString("hex");
+const ADMIN_PHONE = normalizePhone(process.env.ADMIN_PHONE || "00989128477764");
+const SMS_PROVIDER = (process.env.SMS_PROVIDER || (process.env.KAVENEGAR_API_KEY ? "kavenegar" : "mock")).toLowerCase();
+const KAVENEGAR_API_KEY = process.env.KAVENEGAR_API_KEY || "";
+const KAVENEGAR_SENDER = process.env.KAVENEGAR_SENDER || process.env.SMS_SENDER || "";
+const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
+const SMS_WEBHOOK_TOKEN = process.env.SMS_WEBHOOK_TOKEN || "";
+const OTP_TTL_MS = Number(process.env.ADMIN_OTP_TTL_SECONDS || 300) * 1000;
+const OTP_RESEND_MS = Number(process.env.ADMIN_OTP_RESEND_SECONDS || 60) * 1000;
 const SAMPLE_USD_TOMAN = Number(process.env.SAMPLE_USD_TOMAN || 65000);
+
+let adminOtp = null;
 
 const statuses = new Set([
   "new",
@@ -35,6 +45,27 @@ const serviceTypes = new Set([
 ]);
 
 const currencies = new Set(["USD", "EUR", "GBP", "CAD", "AUD", "AED", "TRY"]);
+
+const statusLabels = {
+  new: "جدید",
+  reviewing: "در حال بررسی",
+  quoted: "پیش‌فاکتور",
+  waiting_payment: "در انتظار پرداخت",
+  paid: "پرداخت شده",
+  completed: "تکمیل شده",
+  rejected: "رد شده"
+};
+
+const serviceLabels = {
+  international_payment: "پرداخت سایت خارجی",
+  subscription: "اشتراک",
+  gift_card: "گیفت کارت",
+  exam_fee: "هزینه آزمون",
+  university: "دانشگاه/اپلای",
+  software: "نرم‌افزار",
+  shop_order: "خرید کالا",
+  other: "سایر"
+};
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -125,6 +156,20 @@ function cleanText(value, max = 500) {
     .slice(0, max);
 }
 
+function normalizePhone(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("0098")) digits = `0${digits.slice(4)}`;
+  if (digits.startsWith("98") && digits.length === 12) digits = `0${digits.slice(2)}`;
+  if (digits.startsWith("9") && digits.length === 10) digits = `0${digits}`;
+  return digits;
+}
+
+function maskPhone(value) {
+  const phone = normalizePhone(value);
+  if (phone.length < 7) return phone;
+  return `${phone.slice(0, 4)}***${phone.slice(-4)}`;
+}
+
 function normalizeUrl(value) {
   const raw = cleanText(value, 700);
   if (!raw) return "";
@@ -170,6 +215,130 @@ function publicRequest(request) {
     estimate: request.estimate,
     createdAt: request.createdAt
   };
+}
+
+function hashOtp(code) {
+  return crypto
+    .createHash("sha256")
+    .update(`${code}:${ADMIN_PHONE}:${ADMIN_TOKEN}`)
+    .digest("hex");
+}
+
+function makeOtpCode() {
+  return String(crypto.randomInt(100000, 1000000));
+}
+
+function shouldExposeDevCode() {
+  return SMS_PROVIDER === "mock" || process.env.SMS_EXPOSE_DEV_CODE === "true";
+}
+
+function appendSmsLog(entry) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.appendFileSync(SMS_LOG_FILE, `${JSON.stringify({ at: new Date().toISOString(), ...entry })}\n`, "utf8");
+}
+
+async function sendSms(receptor, message, reason = "notification") {
+  const phone = normalizePhone(receptor);
+  if (!phone) throw new Error("شماره گیرنده پیامک معتبر نیست.");
+
+  const baseLog = {
+    provider: SMS_PROVIDER,
+    reason,
+    receptor: maskPhone(phone),
+    message
+  };
+
+  if (SMS_PROVIDER === "off") {
+    appendSmsLog({ ...baseLog, ok: true, skipped: true });
+    return { ok: true, skipped: true, provider: "off" };
+  }
+
+  if (SMS_PROVIDER === "mock") {
+    console.log(`[SMS mock][${reason}] ${phone}: ${message}`);
+    appendSmsLog({ ...baseLog, ok: true, mock: true });
+    return { ok: true, mock: true, provider: "mock" };
+  }
+
+  if (SMS_PROVIDER === "webhook") {
+    if (!SMS_WEBHOOK_URL) throw new Error("SMS_WEBHOOK_URL تنظیم نشده است.");
+    const response = await fetch(SMS_WEBHOOK_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(SMS_WEBHOOK_TOKEN ? { Authorization: `Bearer ${SMS_WEBHOOK_TOKEN}` } : {})
+      },
+      body: JSON.stringify({ receptor: phone, message, reason })
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      appendSmsLog({ ...baseLog, ok: false, status: response.status, response: text.slice(0, 500) });
+      throw new Error("ارسال پیامک از وبهوک ناموفق بود.");
+    }
+    appendSmsLog({ ...baseLog, ok: true, status: response.status });
+    return { ok: true, provider: "webhook" };
+  }
+
+  if (SMS_PROVIDER === "kavenegar") {
+    if (!KAVENEGAR_API_KEY) throw new Error("KAVENEGAR_API_KEY تنظیم نشده است.");
+    const params = new URLSearchParams({
+      receptor: phone,
+      message
+    });
+    if (KAVENEGAR_SENDER) params.set("sender", KAVENEGAR_SENDER);
+    const response = await fetch(`https://api.kavenegar.com/v1/${encodeURIComponent(KAVENEGAR_API_KEY)}/sms/send.json`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params
+    });
+    const text = await response.text();
+    let payload = null;
+    try {
+      payload = JSON.parse(text);
+    } catch {
+      payload = null;
+    }
+    const apiStatus = payload?.return?.status;
+    if (!response.ok || (apiStatus && apiStatus !== 200)) {
+      appendSmsLog({ ...baseLog, ok: false, status: response.status, apiStatus, response: text.slice(0, 500) });
+      throw new Error("ارسال پیامک کاوه‌نگار ناموفق بود.");
+    }
+    appendSmsLog({ ...baseLog, ok: true, status: response.status, apiStatus });
+    return { ok: true, provider: "kavenegar" };
+  }
+
+  throw new Error(`SMS_PROVIDER ناشناخته است: ${SMS_PROVIDER}`);
+}
+
+async function sendSmsSafe(receptor, message, reason) {
+  try {
+    return await sendSms(receptor, message, reason);
+  } catch (error) {
+    console.error(`[SMS failed][${reason}] ${error.message}`);
+    return { ok: false, error: error.message };
+  }
+}
+
+function requestSummary(request) {
+  return `${request.id} | ${request.fullName} | ${request.amount} ${request.currency} | ${serviceLabels[request.serviceType] || request.serviceType}`;
+}
+
+async function notifyRequestCreated(request) {
+  await Promise.all([
+    sendSmsSafe(ADMIN_PHONE, `آرزیار: درخواست جدید ثبت شد. ${requestSummary(request)}`, "request_created_admin"),
+    sendSmsSafe(request.phone, `آرزیار: درخواست شما با کد ${request.id} ثبت شد و در صف بررسی قرار گرفت.`, "request_created_customer")
+  ]);
+}
+
+async function notifyRequestUpdated(request, changedFields, statusChanged) {
+  const statusText = statusLabels[request.status] || request.status;
+  const changeText = changedFields.length ? changedFields.join("، ") : "درخواست";
+  const jobs = [
+    sendSmsSafe(ADMIN_PHONE, `آرزیار: ${changeText} برای ${request.id} تغییر کرد. وضعیت فعلی: ${statusText}`, "request_updated_admin")
+  ];
+  if (statusChanged) {
+    jobs.push(sendSmsSafe(request.phone, `آرزیار: وضعیت درخواست ${request.id} به «${statusText}» تغییر کرد.`, "request_status_customer"));
+  }
+  await Promise.all(jobs);
 }
 
 function requireAdmin(req, res, url) {
@@ -224,6 +393,7 @@ async function handleApi(req, res, url) {
     sendJson(res, 200, {
       ok: true,
       app: "Arzyar",
+      smsProvider: SMS_PROVIDER,
       now: new Date().toISOString()
     });
     return;
@@ -292,6 +462,7 @@ async function handleApi(req, res, url) {
       const requests = readRequests();
       requests.unshift(requestItem);
       writeRequests(requests);
+      notifyRequestCreated(requestItem);
       sendJson(res, 201, { ok: true, request: publicRequest(requestItem) });
     } catch (error) {
       sendJson(res, 400, { ok: false, error: error.message || "ثبت درخواست انجام نشد." });
@@ -299,14 +470,63 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/admin/login-code") {
+    try {
+      if (!ADMIN_PHONE) {
+        sendJson(res, 500, { ok: false, error: "شماره ادمین تنظیم نشده است." });
+        return;
+      }
+      const now = Date.now();
+      if (adminOtp && now - adminOtp.sentAt < OTP_RESEND_MS) {
+        sendJson(res, 429, {
+          ok: false,
+          error: "کد قبلی به‌تازگی ارسال شده است. کمی صبر کنید.",
+          retryAfterSeconds: Math.ceil((OTP_RESEND_MS - (now - adminOtp.sentAt)) / 1000)
+        });
+        return;
+      }
+      const code = makeOtpCode();
+      adminOtp = {
+        hash: hashOtp(code),
+        expiresAt: now + OTP_TTL_MS,
+        sentAt: now,
+        attempts: 0
+      };
+      await sendSms(ADMIN_PHONE, `کد ورود پنل آرزیار: ${code}\nاعتبار: ${Math.round(OTP_TTL_MS / 60000)} دقیقه`, "admin_login_otp");
+      sendJson(res, 200, {
+        ok: true,
+        phone: maskPhone(ADMIN_PHONE),
+        expiresInSeconds: Math.round(OTP_TTL_MS / 1000),
+        ...(shouldExposeDevCode() ? { devCode: code } : {})
+      });
+    } catch (error) {
+      sendJson(res, 503, { ok: false, error: error.message || "ارسال کد ورود انجام نشد." });
+    }
+    return;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/admin/login") {
     try {
       const body = await parseBody(req);
-      if (String(body.pin || "") === ADMIN_PIN) {
-        sendJson(res, 200, { ok: true, token: ADMIN_TOKEN });
-      } else {
-        sendJson(res, 403, { ok: false, error: "رمز پنل درست نیست." });
+      const code = cleanText(body.code || body.pin, 16);
+      const now = Date.now();
+      if (!adminOtp || now > adminOtp.expiresAt) {
+        sendJson(res, 403, { ok: false, error: "کد ورود منقضی شده است. دوباره کد بگیرید." });
+        return;
       }
+      adminOtp.attempts += 1;
+      if (adminOtp.attempts > 5) {
+        adminOtp = null;
+        sendJson(res, 403, { ok: false, error: "تعداد تلاش‌ها زیاد بود. دوباره کد بگیرید." });
+        return;
+      }
+      if (hashOtp(code) === adminOtp.hash) {
+        adminOtp = null;
+        sendJson(res, 200, { ok: true, token: ADMIN_TOKEN });
+        return;
+      }
+      sendJson(res, 403, { ok: false, error: "کد ورود درست نیست." });
+      return;
     } catch {
       sendJson(res, 400, { ok: false, error: "ورودی معتبر نیست." });
     }
@@ -339,10 +559,15 @@ async function handleApi(req, res, url) {
           return;
         }
         const current = requests[index];
+        const previousStatus = current.status;
+        const previousAssignedTo = current.assignedTo || "";
+        const previousInternalNote = current.internalNote || "";
         const nextStatus = cleanText(body.status, 40);
         const internalNote = cleanText(body.internalNote, 1200);
         const assignedTo = cleanText(body.assignedTo, 80);
         const now = new Date().toISOString();
+        const changedFields = [];
+        let statusChanged = false;
 
         if (nextStatus) {
           if (!statuses.has(nextStatus)) {
@@ -351,6 +576,8 @@ async function handleApi(req, res, url) {
           }
           if (nextStatus !== current.status) {
             current.status = nextStatus;
+            statusChanged = true;
+            changedFields.push("وضعیت");
             current.timeline = Array.isArray(current.timeline) ? current.timeline : [];
             current.timeline.unshift({
               status: nextStatus,
@@ -362,10 +589,15 @@ async function handleApi(req, res, url) {
 
         if ("internalNote" in body) current.internalNote = internalNote;
         if ("assignedTo" in body) current.assignedTo = assignedTo;
+        if ("assignedTo" in body && assignedTo !== previousAssignedTo) changedFields.push("مسئول پیگیری");
+        if ("internalNote" in body && internalNote !== previousInternalNote) changedFields.push("یادداشت داخلی");
         current.updatedAt = now;
 
         requests[index] = current;
         writeRequests(requests);
+        if (changedFields.length || previousStatus !== current.status) {
+          notifyRequestUpdated(current, changedFields, statusChanged);
+        }
         sendJson(res, 200, { ok: true, request: current });
       } catch (error) {
         sendJson(res, 400, { ok: false, error: error.message || "به‌روزرسانی انجام نشد." });
@@ -416,5 +648,6 @@ ensureDataFile();
 server.listen(PORT, () => {
   console.log(`Arzyar site is running at http://localhost:${PORT}`);
   console.log(`Admin dashboard: http://localhost:${PORT}/dashboard`);
-  console.log(`Demo admin PIN: ${ADMIN_PIN}`);
+  console.log(`SMS provider: ${SMS_PROVIDER}`);
+  console.log(`Admin OTP phone: ${maskPhone(ADMIN_PHONE)}`);
 });

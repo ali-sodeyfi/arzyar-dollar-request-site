@@ -11,7 +11,8 @@
 
 ```powershell
 $env:PORT="4321"
-$env:ADMIN_PIN="2468"
+$env:ADMIN_PHONE="00989128477764"
+$env:SMS_PROVIDER="mock"
 & "C:\Users\pc\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" server.js
 ```
 
@@ -27,7 +28,27 @@ http://localhost:4321
 http://localhost:4321/dashboard
 ```
 
-رمز نمونه پنل: `2468`
+در حالت واقعی، کد ورود پنل هر بار به شماره ادمین پیامک می‌شود.
+
+## پیامک
+
+شماره ادمین پیش‌فرض روی `00989128477764` تنظیم شده است. برای ارسال واقعی با کاوه‌نگار:
+
+```powershell
+$env:SMS_PROVIDER="kavenegar"
+$env:KAVENEGAR_API_KEY="YOUR_API_KEY"
+$env:KAVENEGAR_SENDER="YOUR_SENDER_LINE"
+$env:ADMIN_PHONE="00989128477764"
+```
+
+رفتار پیامکی:
+
+- ورود داشبورد: ارسال کد یک‌بارمصرف به شماره ادمین
+- ثبت درخواست: پیامک به ادمین و مشتری
+- تغییر وضعیت/مسئول/یادداشت در داشبورد: پیامک به ادمین
+- تغییر وضعیت: پیامک وضعیت جدید به مشتری
+
+برای پنل‌های دیگر می‌توانید از `SMS_PROVIDER=webhook` و `SMS_WEBHOOK_URL` استفاده کنید.
 
 ## قابلیت‌ها
 
@@ -44,4 +65,4 @@ http://localhost:4321/dashboard
 & "C:\Users\pc\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" scripts/benchmark.js
 ```
 
-برای استفاده واقعی، `ADMIN_PIN` را تغییر دهید و به‌جای فایل JSON از دیتابیس و احراز هویت استاندارد استفاده کنید.
+برای استفاده واقعی، API key پنل پیامک را فقط روی سرور تنظیم کنید و به‌جای فایل JSON از دیتابیس و احراز هویت استاندارد استفاده کنید.

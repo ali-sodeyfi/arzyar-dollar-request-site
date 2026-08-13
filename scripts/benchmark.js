@@ -61,7 +61,7 @@ async function main() {
   fs.mkdirSync(artifactDir, { recursive: true });
   const server = spawn(process.execPath, ["server.js"], {
     cwd: path.join(__dirname, ".."),
-    env: { ...process.env, PORT: String(port), ADMIN_PIN: "2468" },
+    env: { ...process.env, PORT: String(port), SMS_PROVIDER: "mock", ADMIN_PHONE: "00989128477764" },
     stdio: ["ignore", "pipe", "pipe"]
   });
 
@@ -94,7 +94,10 @@ async function main() {
 
     const dashStarted = Date.now();
     await page.goto(`${base}/dashboard`, { waitUntil: "networkidle" });
-    await page.fill("input[name='pin']", "2468");
+    await page.click("#requestLoginCodeButton");
+    await page.waitForSelector("#loginMessage[data-tone='success']", { timeout: 5000 });
+    const otpCode = await page.inputValue("input[name='code']");
+    if (!otpCode) throw new Error("OTP code was not available in mock mode.");
     await page.click("#loginForm button[type='submit']");
     await page.waitForSelector("#dashboardApp:not(.is-hidden)", { timeout: 5000 });
     const dashboardReadyMs = Date.now() - dashStarted;

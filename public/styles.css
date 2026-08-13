@@ -601,6 +601,12 @@ textarea:focus {
   gap: 14px;
 }
 
+.login-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -632,6 +638,13 @@ textarea:focus {
   grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
   gap: 18px;
   align-items: start;
+  min-width: 0;
+}
+
+.requests-panel,
+.details-panel,
+.request-table-wrap {
+  min-width: 0;
 }
 
 .toolbar {
@@ -926,7 +939,8 @@ textarea:focus {
   .stat-grid,
   .benchmark-grid,
   .details-list,
-  .toolbar {
+  .toolbar,
+  .login-actions {
     grid-template-columns: 1fr;
   }
 
