@@ -1,0 +1,20 @@
+{
+  "url": "http://localhost:4321",
+  "checks": {
+    "homeLoadMs": 631,
+    "dashboardReadyMs": 737,
+    "requestSubmit": true,
+    "dashboardUpdateWorked": true,
+    "dashboardRows": 4,
+    "dashboardTotalText": "۴",
+    "mobileHorizontalOverflow": false,
+    "heroImageVisible": true
+  },
+  "artifacts": {
+    "desktopScreenshot": "C:\\Users\\pc\\Documents\\Codex\\2026-08-13\\new-chat-3\\outputs\\dollar-request-site\\benchmark-artifacts\\home-desktop.png",
+    "dashboardScreenshot": "C:\\Users\\pc\\Documents\\Codex\\2026-08-13\\new-chat-3\\outputs\\dollar-request-site\\benchmark-artifacts\\dashboard-desktop.png",
+    "mobileScreenshot": "C:\\Users\\pc\\Documents\\Codex\\2026-08-13\\new-chat-3\\outputs\\dollar-request-site\\benchmark-artifacts\\home-mobile.png",
+    "jsonReport": "C:\\Users\\pc\\Documents\\Codex\\2026-08-13\\new-chat-3\\outputs\\dollar-request-site\\benchmark-artifacts\\benchmark-result.json"
+  },
+  "passed": true
+}

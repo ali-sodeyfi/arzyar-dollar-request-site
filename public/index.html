@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>آرزیار | ثبت درخواست خرید دلاری</title>
+    <meta name="description" content="ثبت درخواست پرداخت ارزی، خرید اشتراک، گیفت کارت و پرداخت‌های بین‌المللی با داشبورد پیگیری.">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header" data-elevated="false">
+      <a class="brand" href="index.html" aria-label="آرزیار">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>
+          <strong>آرزیار</strong>
+          <small>پرداخت ارزی و خرید دلاری</small>
+        </span>
+      </a>
+      <nav class="top-nav" aria-label="ناوبری اصلی">
+        <a href="#request">ثبت درخواست</a>
+        <a href="#services">خدمات</a>
+        <a href="#process">فرآیند</a>
+        <a href="benchmark.html">بنچ‌مارک</a>
+      </nav>
+      <a class="ghost-link" href="dashboard.html">داشبورد</a>
+    </header>
+
+    <main>
+      <section class="hero-shell" aria-labelledby="hero-title">
+        <img class="hero-image" src="assets/hero-payments.png" alt="میز کار مدرن برای بررسی درخواست‌های پرداخت ارزی">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">ثبت و پیگیری خرید دلاری</p>
+            <h1 id="hero-title">درخواست پرداخت ارزی را دقیق ثبت کنید؛ تیم عملیات همه جزئیات را یکجا می‌بیند.</h1>
+            <p class="hero-lede">لینک مقصد، مبلغ، ارز، فوریت و توضیحات را وارد کنید. درخواست با کد رهگیری ذخیره می‌شود و در داشبورد داخلی قابل بررسی، فیلتر و تغییر وضعیت است.</p>
+            <div class="hero-actions">
+              <a class="primary-button" href="#request">شروع ثبت درخواست</a>
+              <a class="secondary-button" href="#services">دیدن سرویس‌ها</a>
+            </div>
+          </div>
+          <dl class="hero-metrics" aria-label="شاخص‌های سرویس">
+            <div>
+              <dt>۲۴/۷</dt>
+              <dd>پذیرش درخواست</dd>
+            </div>
+            <div>
+              <dt>۱ ساعت</dt>
+              <dd>بررسی فوری</dd>
+            </div>
+            <div>
+              <dt>۷ ارز</dt>
+              <dd>پشتیبانی اولیه</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <section class="request-band" id="request" aria-labelledby="request-title">
+        <div class="section-head">
+          <p class="eyebrow">فرم عملیاتی</p>
+          <h2 id="request-title">ثبت درخواست خرید دلاری</h2>
+          <p>برای امنیت، رمز عبور یا اطلاعات محرمانه را در این فرم وارد نکنید. تیم پشتیبانی در صورت نیاز از مسیر امن پیگیری می‌کند.</p>
+        </div>
+
+        <div class="request-layout">
+          <form class="request-form tool-panel" id="requestForm" novalidate>
+            <div class="form-grid">
+              <label>
+                <span>نام و نام خانوادگی</span>
+                <input name="fullName" autocomplete="name" required placeholder="مثلا سارا محمدی">
+              </label>
+              <label>
+                <span>موبایل</span>
+                <input name="phone" inputmode="tel" autocomplete="tel" required placeholder="0912...">
+              </label>
+              <label>
+                <span>ایمیل</span>
+                <input name="email" type="email" autocomplete="email" placeholder="you@example.com">
+              </label>
+              <label>
+                <span>نوع سرویس</span>
+                <select name="serviceType" required>
+                  <option value="international_payment">پرداخت در سایت خارجی</option>
+                  <option value="subscription">خرید یا تمدید اشتراک</option>
+                  <option value="gift_card">خرید گیفت کارت</option>
+                  <option value="exam_fee">هزینه آزمون بین‌المللی</option>
+                  <option value="university">پرداخت دانشگاه/اپلای</option>
+                  <option value="software">خرید نرم‌افزار یا لایسنس</option>
+                  <option value="shop_order">خرید کالا از سایت خارجی</option>
+                  <option value="other">سایر موارد</option>
+                </select>
+              </label>
+              <label class="span-2">
+                <span>لینک پرداخت یا سایت مقصد</span>
+                <input name="targetUrl" inputmode="url" required placeholder="https://example.com/checkout">
+              </label>
+              <label>
+                <span>مبلغ</span>
+                <input name="amount" type="number" min="1" step="0.01" required placeholder="20">
+              </label>
+              <label>
+                <span>ارز</span>
+                <select name="currency" required>
+                  <option value="USD">دلار آمریکا USD</option>
+                  <option value="EUR">یورو EUR</option>
+                  <option value="GBP">پوند GBP</option>
+                  <option value="CAD">دلار کانادا CAD</option>
+                  <option value="AUD">دلار استرالیا AUD</option>
+                  <option value="AED">درهم AED</option>
+                  <option value="TRY">لیر TRY</option>
+                </select>
+              </label>
+              <label>
+                <span>روش پرداخت مقصد</span>
+                <select name="paymentMethod">
+                  <option>Visa / Master</option>
+                  <option>PayPal</option>
+                  <option>درگاه مستقیم</option>
+                  <option>Invoice</option>
+                  <option>نامشخص</option>
+                </select>
+              </label>
+              <label>
+                <span>مهلت انجام</span>
+                <input name="deadline" placeholder="مثلا تا امشب">
+              </label>
+              <label class="span-2">
+                <span>شناسه حساب یا توضیح غیرمحرمانه</span>
+                <input name="accountHint" placeholder="مثلا ایمیل اکانت، شماره invoice یا نام پلن؛ رمز وارد نکنید">
+              </label>
+              <label class="span-2">
+                <span>توضیحات</span>
+                <textarea name="description" rows="4" placeholder="جزئیاتی که برای بررسی پرداخت لازم است..."></textarea>
+              </label>
+            </div>
+
+            <div class="form-options">
+              <label class="check-row">
+                <input name="urgent" type="checkbox">
+                <span>عجله دارم و بررسی سریع می‌خواهم</span>
+              </label>
+              <label class="check-row">
+                <input name="userConsent" type="checkbox" required>
+                <span>درخواست من برای خرید یا پرداخت مجاز است و قوانین سرویس را می‌پذیرم.</span>
+              </label>
+            </div>
+
+            <div class="estimate-box" aria-live="polite">
+              <div>
+                <span>برآورد نمونه</span>
+                <strong id="estimateText">مبلغ را وارد کنید</strong>
+              </div>
+              <small>نرخ نهایی توسط اپراتور تایید می‌شود.</small>
+            </div>
+
+            <div class="form-actions">
+              <button class="primary-button" type="submit">ثبت درخواست</button>
+              <button class="icon-button" type="reset" aria-label="پاک کردن فرم" title="پاک کردن فرم">
+                <span aria-hidden="true">↺</span>
+              </button>
+            </div>
+            <p class="form-message" id="formMessage" role="status"></p>
+          </form>
+
+          <aside class="side-panel" aria-label="خلاصه سرویس">
+            <div class="status-card">
+              <span class="status-dot"></span>
+              <strong>جریان پیشنهادی</strong>
+              <p>ثبت درخواست، بررسی کارشناس، اعلام پیش‌فاکتور، پرداخت ریالی، انجام خرید و ارسال رسید.</p>
+            </div>
+            <ul class="feature-list">
+              <li>کد رهگیری خودکار برای هر درخواست</li>
+              <li>محاسبه کارمزد نمونه بر اساس مبلغ و فوریت</li>
+              <li>داشبورد مدیریتی با جستجو، فیلتر و خروجی CSV</li>
+              <li>بدون دریافت رمز عبور در فرم عمومی</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <section class="services-band" id="services" aria-labelledby="services-title">
+        <div class="section-head compact">
+          <p class="eyebrow">سرویس‌ها</p>
+          <h2 id="services-title">دسته‌های اصلی خرید دلاری</h2>
+        </div>
+        <div class="service-grid">
+          <article>
+            <span aria-hidden="true">💳</span>
+            <h3>پرداخت سایت خارجی</h3>
+            <p>پرداخت با کارت‌های بین‌المللی، پی‌پال یا invoice برای سرویس‌های مجاز.</p>
+          </article>
+          <article>
+            <span aria-hidden="true">⚙</span>
+            <h3>اشتراک و نرم‌افزار</h3>
+            <p>تمدید ابزارهای کاری، هاستینگ، API، طراحی، مارکتینگ و آموزش.</p>
+          </article>
+          <article>
+            <span aria-hidden="true">🎓</span>
+            <h3>آزمون و دانشگاه</h3>
+            <p>ثبت‌نام آزمون، اپلیکیشن‌فی، ارسال مدارک و هزینه‌های دانشجویی.</p>
+          </article>
+          <article>
+            <span aria-hidden="true">🎁</span>
+            <h3>گیفت کارت</h3>
+            <p>درخواست خرید گیفت کارت با کشور، مبلغ و مقصد مصرف مشخص.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="process-band" id="process" aria-labelledby="process-title">
+        <div class="section-head compact">
+          <p class="eyebrow">عملیات</p>
+          <h2 id="process-title">از درخواست تا رسید</h2>
+        </div>
+        <ol class="process-list">
+          <li>
+            <strong>۱. ثبت دقیق اطلاعات</strong>
+            <span>مبلغ، ارز، لینک و توضیحات غیرمحرمانه وارد می‌شود.</span>
+          </li>
+          <li>
+            <strong>۲. بررسی کارشناس</strong>
+            <span>قابلیت پرداخت، کارمزد، فوریت و ریسک بررسی می‌شود.</span>
+          </li>
+          <li>
+            <strong>۳. اعلام پیش‌فاکتور</strong>
+            <span>نرخ نهایی و مبلغ ریالی برای تایید مشتری ارسال می‌شود.</span>
+          </li>
+          <li>
+            <strong>۴. انجام خرید</strong>
+            <span>پس از تسویه، پرداخت انجام و رسید در پرونده درخواست ثبت می‌شود.</span>
+          </li>
+        </ol>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>آرزیار، نمونه اولیه مستقل برای ثبت و مدیریت درخواست خرید دلاری.</span>
+      <a href="dashboard.html">ورود به داشبورد</a>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>

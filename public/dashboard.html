@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>داشبورد آرزیار | مدیریت درخواست‌ها</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body class="dashboard-body">
+    <header class="site-header dashboard-header">
+      <a class="brand" href="index.html" aria-label="آرزیار">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span>
+          <strong>داشبورد آرزیار</strong>
+          <small>مدیریت درخواست‌های خرید دلاری</small>
+        </span>
+      </a>
+      <nav class="top-nav" aria-label="ناوبری داشبورد">
+        <a href="index.html">سایت</a>
+        <a href="benchmark.html">بنچ‌مارک</a>
+      </nav>
+      <button class="ghost-link button-link" id="logoutButton" type="button">خروج</button>
+    </header>
+
+    <main class="dashboard-shell">
+      <section class="login-panel tool-panel" id="loginPanel" aria-labelledby="loginTitle">
+        <div>
+          <p class="eyebrow">ورود مدیر</p>
+          <h1 id="loginTitle">رمز پنل را وارد کنید</h1>
+          <p>برای نسخه نمونه رمز پیش‌فرض 2468 است. در اجراهای واقعی مقدار ADMIN_PIN را تغییر دهید.</p>
+        </div>
+        <form id="loginForm" class="login-form">
+          <label>
+            <span>رمز پنل</span>
+            <input name="pin" type="password" inputmode="numeric" autocomplete="current-password" required placeholder="••••">
+          </label>
+          <button class="primary-button" type="submit">ورود</button>
+          <p class="form-message" id="loginMessage" role="status"></p>
+        </form>
+      </section>
+
+      <section class="dashboard-app is-hidden" id="dashboardApp" aria-labelledby="dashboardTitle">
+        <div class="dashboard-title-row">
+          <div>
+            <p class="eyebrow">نمای عملیاتی</p>
+            <h1 id="dashboardTitle">درخواست‌های ثبت‌شده</h1>
+          </div>
+          <div class="dashboard-actions">
+            <button class="secondary-button" id="refreshButton" type="button">به‌روزرسانی</button>
+            <a class="primary-button" id="exportLink" href="#">خروجی CSV</a>
+          </div>
+        </div>
+
+        <section class="stat-grid" aria-label="آمار درخواست‌ها">
+          <article>
+            <span>کل درخواست‌ها</span>
+            <strong id="statTotal">۰</strong>
+          </article>
+          <article>
+            <span>در صف بررسی</span>
+            <strong id="statOpen">۰</strong>
+          </article>
+          <article>
+            <span>فوری</span>
+            <strong id="statUrgent">۰</strong>
+          </article>
+          <article>
+            <span>جمع ارزی</span>
+            <strong id="statAmount">۰ USD</strong>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <div class="requests-panel tool-panel">
+            <div class="toolbar">
+              <label class="search-box">
+                <span class="sr-only">جستجو</span>
+                <input id="searchInput" placeholder="جستجو نام، موبایل، کد یا لینک">
+              </label>
+              <label>
+                <span class="sr-only">فیلتر وضعیت</span>
+                <select id="statusFilter">
+                  <option value="all">همه وضعیت‌ها</option>
+                  <option value="new">جدید</option>
+                  <option value="reviewing">در حال بررسی</option>
+                  <option value="quoted">پیش‌فاکتور</option>
+                  <option value="waiting_payment">در انتظار پرداخت</option>
+                  <option value="paid">پرداخت شده</option>
+                  <option value="completed">تکمیل شده</option>
+                  <option value="rejected">رد شده</option>
+                </select>
+              </label>
+            </div>
+            <div class="request-table-wrap">
+              <table class="request-table">
+                <thead>
+                  <tr>
+                    <th>کد</th>
+                    <th>مشتری</th>
+                    <th>سرویس</th>
+                    <th>مبلغ</th>
+                    <th>وضعیت</th>
+                    <th>زمان</th>
+                  </tr>
+                </thead>
+                <tbody id="requestsTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <aside class="details-panel tool-panel" id="detailsPanel" aria-label="جزئیات درخواست">
+            <div class="empty-state" id="emptyState">
+              <strong>یک درخواست را انتخاب کنید</strong>
+              <p>جزئیات، لینک مقصد، یادداشت داخلی و تغییر وضعیت اینجا نمایش داده می‌شود.</p>
+            </div>
+            <div class="details-content is-hidden" id="detailsContent">
+              <div class="details-head">
+                <div>
+                  <span class="request-id" id="detailId"></span>
+                  <h2 id="detailName"></h2>
+                </div>
+                <span class="status-pill" id="detailStatus"></span>
+              </div>
+              <dl class="details-list">
+                <div><dt>موبایل</dt><dd id="detailPhone"></dd></div>
+                <div><dt>ایمیل</dt><dd id="detailEmail"></dd></div>
+                <div><dt>سرویس</dt><dd id="detailService"></dd></div>
+                <div><dt>مبلغ</dt><dd id="detailAmount"></dd></div>
+                <div><dt>برآورد ریالی</dt><dd id="detailEstimate"></dd></div>
+                <div><dt>فوریت</dt><dd id="detailUrgent"></dd></div>
+                <div class="span-full"><dt>لینک مقصد</dt><dd><a id="detailUrl" href="#" target="_blank" rel="noopener"></a></dd></div>
+                <div class="span-full"><dt>توضیحات</dt><dd id="detailDescription"></dd></div>
+              </dl>
+
+              <form class="admin-form" id="adminForm">
+                <label>
+                  <span>وضعیت</span>
+                  <select name="status" id="adminStatus">
+                    <option value="new">جدید</option>
+                    <option value="reviewing">در حال بررسی</option>
+                    <option value="quoted">پیش‌فاکتور</option>
+                    <option value="waiting_payment">در انتظار پرداخت</option>
+                    <option value="paid">پرداخت شده</option>
+                    <option value="completed">تکمیل شده</option>
+                    <option value="rejected">رد شده</option>
+                  </select>
+                </label>
+                <label>
+                  <span>مسئول پیگیری</span>
+                  <input name="assignedTo" id="assignedTo" placeholder="نام کارشناس">
+                </label>
+                <label>
+                  <span>یادداشت داخلی</span>
+                  <textarea name="internalNote" id="internalNote" rows="4" placeholder="یادداشت برای تیم عملیات"></textarea>
+                </label>
+                <button class="primary-button" type="submit">ذخیره تغییرات</button>
+                <p class="form-message" id="adminMessage" role="status"></p>
+              </form>
+
+              <div class="timeline">
+                <h3>تاریخچه</h3>
+                <ul id="timelineList"></ul>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <script src="dashboard.js" defer></script>
+  </body>
+</html>

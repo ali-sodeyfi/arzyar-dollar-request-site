@@ -1,0 +1,20 @@
+{
+  "name": "arzyar-dollar-request-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RTL Persian dollar purchase request website with admin dashboard.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "benchmark": "node scripts/benchmark.js"
+  },
+  "keywords": [
+    "rtl",
+    "persian",
+    "fintech",
+    "requests",
+    "dashboard"
+  ],
+  "author": "Codex",
+  "license": "UNLICENSED"
+}
