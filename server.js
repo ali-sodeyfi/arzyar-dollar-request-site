@@ -222,6 +222,16 @@ function smsLogMessage(message, reason) {
   return message;
 }
 
+function summarizeSmsIrData(data) {
+  if (!data || typeof data !== "object") return undefined;
+  const summary = {};
+  if (data.messageId != null) summary.messageId = data.messageId;
+  if (data.packId != null) summary.packId = data.packId;
+  if (Array.isArray(data.messageIds)) summary.messageIds = data.messageIds;
+  if (data.cost != null) summary.cost = data.cost;
+  return Object.keys(summary).length ? summary : undefined;
+}
+
 function normalizeUrl(value) {
   const raw = cleanText(value, 700);
   if (!raw) return "";
@@ -401,7 +411,8 @@ async function sendSms(receptor, message, reason = "notification") {
       ok: true,
       status: response.status,
       apiStatus,
-      endpoint: useVerifyTemplate ? "verify" : "bulk"
+      endpoint: useVerifyTemplate ? "verify" : "bulk",
+      data: summarizeSmsIrData(payload?.data)
     });
     return { ok: true, provider: "smsir", endpoint: useVerifyTemplate ? "verify" : "bulk" };
   }
