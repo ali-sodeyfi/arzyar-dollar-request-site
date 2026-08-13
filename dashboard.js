@@ -5,6 +5,7 @@
   const loginPanel = document.querySelector("#loginPanel");
   const dashboardApp = document.querySelector("#dashboardApp");
   const loginForm = document.querySelector("#loginForm");
+  const requestLoginCodeButton = document.querySelector("#requestLoginCodeButton");
   const loginMessage = document.querySelector("#loginMessage");
   const logoutButton = document.querySelector("#logoutButton");
   const refreshButton = document.querySelector("#refreshButton");
@@ -326,6 +327,34 @@
     }
   }
 
+  requestLoginCodeButton.addEventListener("click", async () => {
+    setLoginMessage("", "");
+    requestLoginCodeButton.disabled = true;
+    requestLoginCodeButton.textContent = "در حال ارسال...";
+    try {
+      const response = await fetch("/api/admin/login-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}"
+      });
+      const type = response.headers.get("content-type") || "";
+      if (!type.includes("application/json")) {
+        loginForm.elements.code.value = "2468";
+        setLoginMessage("نسخه GitHub Pages دمو است؛ کد 2468 آماده شد.", "success");
+        return;
+      }
+      const payload = await response.json();
+      if (!response.ok || !payload.ok) throw new Error(payload.error || "ارسال کد انجام نشد.");
+      if (payload.devCode) loginForm.elements.code.value = payload.devCode;
+      setLoginMessage(`کد ورود به ${payload.phone || "شماره ادمین"} ارسال شد.`, "success");
+    } catch (error) {
+      setLoginMessage(error.message || "ارسال کد انجام نشد.", "error");
+    } finally {
+      requestLoginCodeButton.disabled = false;
+      requestLoginCodeButton.textContent = "ارسال کد";
+    }
+  });
+
   loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     setLoginMessage("", "");
@@ -338,7 +367,7 @@
       });
       const type = response.headers.get("content-type") || "";
       if (!type.includes("application/json")) {
-        if (String(data.pin || "") !== "2468") throw new Error("رمز پنل درست نیست.");
+        if (String(data.code || data.pin || "") !== "2468") throw new Error("کد ورود درست نیست.");
         localStorage.setItem(tokenKey, `${staticTokenPrefix}${Date.now()}`);
         showDashboard(true);
         await loadRequests();
@@ -351,7 +380,7 @@
       showDashboard(true);
       await loadRequests();
     } catch (error) {
-      if (String(data.pin || "") === "2468" && !error.message.includes("رمز پنل")) {
+      if (String(data.code || data.pin || "") === "2468" && !error.message.includes("کد ورود")) {
         localStorage.setItem(tokenKey, `${staticTokenPrefix}${Date.now()}`);
         showDashboard(true);
         await loadRequests();

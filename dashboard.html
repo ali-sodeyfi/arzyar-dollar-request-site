@@ -26,15 +26,18 @@
       <section class="login-panel tool-panel" id="loginPanel" aria-labelledby="loginTitle">
         <div>
           <p class="eyebrow">ورود مدیر</p>
-          <h1 id="loginTitle">رمز پنل را وارد کنید</h1>
-          <p>برای نسخه نمونه رمز پیش‌فرض 2468 است. در اجراهای واقعی مقدار ADMIN_PIN را تغییر دهید.</p>
+          <h1 id="loginTitle">ورود با کد پیامکی</h1>
+          <p>هر بار ورود، یک کد یک‌بارمصرف به شماره ادمین ارسال می‌شود.</p>
         </div>
         <form id="loginForm" class="login-form">
           <label>
-            <span>رمز پنل</span>
-            <input name="pin" type="password" inputmode="numeric" autocomplete="current-password" required placeholder="••••">
+            <span>کد پیامکی</span>
+            <input name="code" type="password" inputmode="numeric" autocomplete="one-time-code" required placeholder="کد ۶ رقمی">
           </label>
-          <button class="primary-button" type="submit">ورود</button>
+          <div class="login-actions">
+            <button class="secondary-button" id="requestLoginCodeButton" type="button">ارسال کد</button>
+            <button class="primary-button" type="submit">ورود</button>
+          </div>
           <p class="form-message" id="loginMessage" role="status"></p>
         </form>
       </section>
