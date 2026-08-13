@@ -1,3 +1,13 @@
+@font-face {
+  font-family: "Vazirmatn";
+  src:
+    url("assets/fonts/Vazirmatn-wght.woff2") format("woff2 supports variations"),
+    url("assets/fonts/Vazirmatn-wght.woff2") format("woff2-variations");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   --ink: #172126;
@@ -12,7 +22,8 @@
   --gold: #c18b13;
   --green: #168052;
   --shadow: 0 18px 50px rgba(23, 33, 38, 0.14);
-  font-family: Vazirmatn, IRANSans, "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-ui: Vazirmatn, IRANSans, "Segoe UI", Tahoma, Arial, sans-serif;
+  font-family: var(--font-ui);
 }
 
 * {
@@ -21,12 +32,15 @@
 
 html {
   scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   margin: 0;
   background: var(--soft);
   color: var(--ink);
+  font-family: var(--font-ui);
   font-size: 16px;
   line-height: 1.7;
   letter-spacing: 0;
@@ -42,6 +56,16 @@ input,
 select,
 textarea {
   font: inherit;
+  font-family: var(--font-ui);
+}
+
+table {
+  font-family: var(--font-ui);
+}
+
+::placeholder {
+  color: #849197;
+  opacity: 1;
 }
 
 img {
@@ -281,6 +305,7 @@ h3 {
   color: var(--teal-dark);
   font-size: 26px;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-metrics dd {
@@ -373,6 +398,17 @@ textarea {
   outline: none;
 }
 
+input[inputmode="tel"],
+input[inputmode="url"],
+input[type="email"],
+input[type="number"],
+input[autocomplete="one-time-code"] {
+  direction: ltr;
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  unicode-bidi: plaintext;
+}
+
 textarea {
   min-height: 120px;
   resize: vertical;
@@ -435,6 +471,7 @@ textarea:focus {
 .estimate-box strong {
   font-size: 20px;
   color: var(--teal-dark);
+  font-variant-numeric: tabular-nums;
 }
 
 .form-message {
@@ -631,6 +668,7 @@ textarea:focus {
   display: block;
   margin-top: 6px;
   font-size: 25px;
+  font-variant-numeric: tabular-nums;
 }
 
 .dashboard-grid {
@@ -695,6 +733,17 @@ textarea:focus {
 .request-table td strong,
 .request-table td small {
   display: block;
+}
+
+.request-table td:first-child,
+.request-table td:nth-child(4),
+.request-table td:nth-child(6),
+.request-id,
+#statAmount,
+#detailPhone,
+#detailAmount,
+#detailEstimate {
+  font-variant-numeric: tabular-nums;
 }
 
 .table-empty {
@@ -786,7 +835,10 @@ textarea:focus {
 }
 
 #detailEmail,
+#detailPhone,
+#detailAmount,
 #detailUrl,
+#statAmount,
 .request-table td:first-child strong {
   direction: ltr;
   unicode-bidi: plaintext;
