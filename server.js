@@ -9,6 +9,8 @@ const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "requests.json");
 const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 
+loadEnvFile(path.join(ROOT_DIR, ".env"));
+
 const PORT = Number(process.env.PORT || 4321);
 const ADMIN_TOKEN = crypto.randomBytes(32).toString("hex");
 const ADMIN_PHONE = normalizePhone(process.env.ADMIN_PHONE || "00989128477764");
@@ -86,6 +88,27 @@ const contentTypes = {
   ".svg": "image/svg+xml; charset=utf-8",
   ".ico": "image/x-icon"
 };
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const lines = fs.readFileSync(filePath, "utf8").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const equalsIndex = trimmed.indexOf("=");
+    if (equalsIndex <= 0) continue;
+    const key = trimmed.slice(0, equalsIndex).trim();
+    let value = trimmed.slice(equalsIndex + 1).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key) || process.env[key] != null) continue;
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  }
+}
 
 function ensureDataFile() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -192,6 +215,13 @@ function extractSmsCode(message) {
   return match ? match[1] : "";
 }
 
+function smsLogMessage(message, reason) {
+  if (reason === "admin_login_otp") {
+    return String(message || "").replace(/\b\d{4,8}\b/g, "[CODE]");
+  }
+  return message;
+}
+
 function normalizeUrl(value) {
   const raw = cleanText(value, 700);
   if (!raw) return "";
@@ -267,7 +297,7 @@ async function sendSms(receptor, message, reason = "notification") {
     provider: SMS_PROVIDER,
     reason,
     receptor: maskPhone(phone),
-    message
+    message: smsLogMessage(message, reason)
   };
 
   if (SMS_PROVIDER === "off") {
@@ -276,7 +306,7 @@ async function sendSms(receptor, message, reason = "notification") {
   }
 
   if (SMS_PROVIDER === "mock") {
-    console.log(`[SMS mock][${reason}] ${phone}: ${message}`);
+    console.log(`[SMS mock][${reason}] ${phone}: ${smsLogMessage(message, reason)}`);
     appendSmsLog({ ...baseLog, ok: true, mock: true });
     return { ok: true, mock: true, provider: "mock" };
   }
