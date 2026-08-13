@@ -2,6 +2,7 @@
   const tokenKey = "arzyarAdminToken";
   const staticTokenPrefix = "static-admin-";
   const staticStorageKey = "arzyarStaticRequests";
+  const loginCodeCooldownKey = "arzyarLoginCodeCooldownUntil";
   const loginPanel = document.querySelector("#loginPanel");
   const dashboardApp = document.querySelector("#dashboardApp");
   const loginForm = document.querySelector("#loginForm");
@@ -22,6 +23,8 @@
     dateStyle: "short",
     timeStyle: "short"
   });
+  let loginCodeCooldownTimer = null;
+  let loginCodeSending = false;
 
   const serviceLabels = {
     international_payment: "پرداخت سایت خارجی",
@@ -111,6 +114,49 @@
   function setLoginMessage(text, tone) {
     loginMessage.textContent = text || "";
     loginMessage.dataset.tone = tone || "";
+  }
+
+  function isolateLtr(value) {
+    return `\u2066${String(value || "")}\u2069`;
+  }
+
+  function persianDigits(value) {
+    return String(value).replace(/\d/g, (digit) => formatter.format(Number(digit)));
+  }
+
+  function formatCooldown(ms) {
+    const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${persianDigits(String(minutes).padStart(2, "0"))}:${persianDigits(String(seconds).padStart(2, "0"))}`;
+  }
+
+  function renderLoginCodeCooldown() {
+    if (loginCodeSending) return;
+    const cooldownUntil = Number(localStorage.getItem(loginCodeCooldownKey) || 0);
+    const remaining = cooldownUntil - Date.now();
+    if (remaining > 0) {
+      requestLoginCodeButton.disabled = true;
+      requestLoginCodeButton.textContent = `ارسال مجدد ${formatCooldown(remaining)}`;
+      if (!loginCodeCooldownTimer) {
+        loginCodeCooldownTimer = window.setInterval(renderLoginCodeCooldown, 1000);
+      }
+      return;
+    }
+
+    localStorage.removeItem(loginCodeCooldownKey);
+    if (loginCodeCooldownTimer) {
+      window.clearInterval(loginCodeCooldownTimer);
+      loginCodeCooldownTimer = null;
+    }
+    requestLoginCodeButton.disabled = false;
+    requestLoginCodeButton.textContent = "ارسال کد";
+  }
+
+  function startLoginCodeCooldown(seconds) {
+    const durationSeconds = Math.max(1, Number(seconds) || 120);
+    localStorage.setItem(loginCodeCooldownKey, String(Date.now() + durationSeconds * 1000));
+    renderLoginCodeCooldown();
   }
 
   function setAdminMessage(text, tone) {
@@ -328,7 +374,10 @@
   }
 
   requestLoginCodeButton.addEventListener("click", async () => {
+    if (requestLoginCodeButton.disabled) return;
     setLoginMessage("", "");
+    loginCodeSending = true;
+    let cooldownSeconds = 0;
     requestLoginCodeButton.disabled = true;
     requestLoginCodeButton.textContent = "در حال ارسال...";
     try {
@@ -341,19 +390,31 @@
       if (!type.includes("application/json")) {
         loginForm.elements.code.value = "2468";
         setLoginMessage("نسخه GitHub Pages دمو است؛ کد 2468 آماده شد.", "success");
+        cooldownSeconds = 120;
         return;
       }
       const payload = await response.json();
-      if (!response.ok || !payload.ok) throw new Error(payload.error || "ارسال کد انجام نشد.");
+      if (!response.ok || !payload.ok) {
+        cooldownSeconds = response.status === 429 ? Number(payload.retryAfterSeconds || 0) : 0;
+        throw new Error(payload.error || "ارسال کد انجام نشد.");
+      }
       if (payload.devCode) loginForm.elements.code.value = payload.devCode;
-      setLoginMessage(`کد ورود به ${payload.phone || "شماره ادمین"} ارسال شد.`, "success");
+      const phoneText = payload.phone ? isolateLtr(payload.phone) : "شماره ادمین";
+      setLoginMessage(`کد ورود به ${phoneText} ارسال شد.`, "success");
+      cooldownSeconds = Number(payload.resendAfterSeconds || 120);
     } catch (error) {
       setLoginMessage(error.message || "ارسال کد انجام نشد.", "error");
     } finally {
-      requestLoginCodeButton.disabled = false;
-      requestLoginCodeButton.textContent = "ارسال کد";
+      loginCodeSending = false;
+      if (cooldownSeconds > 0) {
+        startLoginCodeCooldown(cooldownSeconds);
+      } else {
+        renderLoginCodeCooldown();
+      }
     }
   });
+
+  renderLoginCodeCooldown();
 
   loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();

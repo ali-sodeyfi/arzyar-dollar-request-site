@@ -27,7 +27,7 @@ const SMSIR_VERIFY_CODE_PARAMETER = process.env.SMSIR_VERIFY_CODE_PARAMETER || "
 const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
 const SMS_WEBHOOK_TOKEN = process.env.SMS_WEBHOOK_TOKEN || "";
 const OTP_TTL_MS = Number(process.env.ADMIN_OTP_TTL_SECONDS || 300) * 1000;
-const OTP_RESEND_MS = Number(process.env.ADMIN_OTP_RESEND_SECONDS || 60) * 1000;
+const OTP_RESEND_MS = Number(process.env.ADMIN_OTP_RESEND_SECONDS || 120) * 1000;
 const SAMPLE_USD_TOMAN = Number(process.env.SAMPLE_USD_TOMAN || 65000);
 
 let adminOtp = null;
@@ -625,6 +625,7 @@ async function handleApi(req, res, url) {
         ok: true,
         phone: maskPhone(ADMIN_PHONE),
         expiresInSeconds: Math.round(OTP_TTL_MS / 1000),
+        resendAfterSeconds: Math.round(OTP_RESEND_MS / 1000),
         ...(shouldExposeDevCode() ? { devCode: code } : {})
       });
     } catch (error) {

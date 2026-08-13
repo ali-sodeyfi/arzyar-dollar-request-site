@@ -1,8 +1,8 @@
 {
-  "url": "http://localhost:4321",
+  "url": "http://localhost:4323",
   "checks": {
-    "homeLoadMs": 591,
-    "dashboardReadyMs": 744,
+    "homeLoadMs": 630,
+    "dashboardReadyMs": 655,
     "requestSubmit": true,
     "dashboardUpdateWorked": true,
     "dashboardRows": 4,
