@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>داشبورد آرزیار | مدیریت درخواست‌ها</title>
+    <title>داشبورد ارزراه | مدیریت درخواست‌ها</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#087b75">
-    <link rel="preload" href="assets/fonts/Vazirmatn-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body class="dashboard-body">
     <header class="site-header dashboard-header">
-      <a class="brand" href="index.html" aria-label="آرزیار">
-        <span class="brand-mark" aria-hidden="true">A</span>
+      <a class="brand" href="index.html" aria-label="ارزراه">
+        <span class="brand-mark" aria-hidden="true"><img src="logo-mark.svg" alt=""></span>
         <span>
-          <strong>داشبورد آرزیار</strong>
+          <strong>داشبورد ارزراه</strong>
           <small>مدیریت درخواست‌های خرید دلاری</small>
         </span>
       </a>
@@ -133,10 +133,25 @@
                 <div><dt>سرویس</dt><dd id="detailService"></dd></div>
                 <div><dt>مبلغ</dt><dd id="detailAmount"></dd></div>
                 <div><dt>برآورد ریالی</dt><dd id="detailEstimate"></dd></div>
+                <div><dt>قیمت نهایی</dt><dd id="detailFinalPrice"></dd></div>
                 <div><dt>فوریت</dt><dd id="detailUrgent"></dd></div>
                 <div class="span-full"><dt>لینک مقصد</dt><dd><a id="detailUrl" href="#" target="_blank" rel="noopener"></a></dd></div>
                 <div class="span-full"><dt>توضیحات</dt><dd id="detailDescription"></dd></div>
               </dl>
+
+              <form class="payment-form" id="paymentForm">
+                <div>
+                  <span>درگاه پرداخت</span>
+                  <strong id="paymentStatusText">لینک پرداخت ساخته نشده است</strong>
+                </div>
+                <label>
+                  <span>قیمت نهایی، تومان</span>
+                  <input name="amountToman" id="paymentAmount" inputmode="numeric" placeholder="مثلا ۳۵۰۰۰۰۰">
+                </label>
+                <button class="secondary-button" type="submit">ثبت قیمت نهایی و ارسال لینک پرداخت</button>
+                <a class="button-link is-hidden" id="paymentLink" href="#" target="_blank" rel="noopener">باز کردن لینک پرداخت</a>
+                <p class="form-message" id="paymentMessage" role="status"></p>
+              </form>
 
               <form class="admin-form" id="adminForm">
                 <label>
