@@ -3,20 +3,20 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>آرزیار | ثبت درخواست خرید دلاری</title>
+    <title>ارزراه | ثبت درخواست خرید دلاری</title>
     <meta name="description" content="ثبت درخواست پرداخت ارزی، خرید اشتراک، گیفت کارت و پرداخت‌های بین‌المللی با داشبورد پیگیری.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#087b75">
-    <link rel="preload" href="assets/fonts/Vazirmatn-wght.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="site-header" data-elevated="false">
-      <a class="brand" href="index.html" aria-label="آرزیار">
-        <span class="brand-mark" aria-hidden="true">A</span>
+      <a class="brand" href="index.html" aria-label="ارزراه">
+        <span class="brand-mark" aria-hidden="true"><img src="logo-mark.svg" alt=""></span>
         <span>
-          <strong>آرزیار</strong>
-          <small>پرداخت ارزی و خرید دلاری</small>
+          <strong>ارزراه</strong>
+          <small>مسیر پرداخت ارزی و خرید دلاری</small>
         </span>
       </a>
       <nav class="top-nav" aria-label="ناوبری اصلی">
@@ -35,8 +35,8 @@
         <div class="hero-content">
           <div class="hero-copy">
             <p class="eyebrow">ثبت و پیگیری خرید دلاری</p>
-            <h1 id="hero-title">درخواست پرداخت ارزی را دقیق ثبت کنید؛ تیم عملیات همه جزئیات را یکجا می‌بیند.</h1>
-            <p class="hero-lede">لینک مقصد، مبلغ، ارز، فوریت و توضیحات را وارد کنید. درخواست با کد رهگیری ذخیره می‌شود و در داشبورد داخلی قابل بررسی، فیلتر و تغییر وضعیت است.</p>
+            <h1 id="hero-title">خرید دلاری و پرداخت ارزی بدون دردسر</h1>
+            <p class="hero-lede">لینک خرید، مبلغ و توضیحات را ثبت کنید؛ ارزراه درخواست را با کد رهگیری، پیامک وضعیت و داشبورد پیگیری جلو می‌برد.</p>
             <div class="hero-actions">
               <a class="primary-button" href="#request">شروع ثبت درخواست</a>
               <a class="secondary-button" href="#services">دیدن سرویس‌ها</a>
@@ -73,10 +73,21 @@
                 <span>نام و نام خانوادگی</span>
                 <input name="fullName" autocomplete="name" required placeholder="مثلا سارا محمدی">
               </label>
-              <label>
-                <span>موبایل</span>
-                <input name="phone" inputmode="tel" autocomplete="tel" required placeholder="0912...">
-              </label>
+              <div class="phone-field-group">
+                <label>
+                  <span>موبایل</span>
+                  <input name="phone" inputmode="tel" autocomplete="tel" required placeholder="0912...">
+                </label>
+                <div class="phone-verify-panel">
+                  <input name="phoneVerificationToken" type="hidden">
+                  <div class="phone-verify-actions">
+                    <button class="secondary-button" id="sendPhoneCodeButton" type="button">ارسال کد تایید</button>
+                    <input name="phoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="کد تایید">
+                    <button class="primary-button" id="verifyPhoneCodeButton" type="button">تایید شماره</button>
+                  </div>
+                  <p class="form-message phone-verify-message" id="phoneVerifyMessage" role="status"></p>
+                </div>
+              </div>
               <label>
                 <span>ایمیل</span>
                 <input name="email" type="email" autocomplete="email" placeholder="you@example.com">
@@ -154,7 +165,7 @@
                 <span>برآورد نمونه</span>
                 <strong id="estimateText">مبلغ را وارد کنید</strong>
               </div>
-              <small>نرخ نهایی توسط اپراتور تایید می‌شود.</small>
+              <small id="estimateHint">نرخ نهایی توسط اپراتور تایید می‌شود.</small>
             </div>
 
             <div class="form-actions">
@@ -238,7 +249,7 @@
     </main>
 
     <footer class="site-footer">
-      <span>آرزیار، نمونه اولیه مستقل برای ثبت و مدیریت درخواست خرید دلاری.</span>
+      <span>ارزراه، نمونه اولیه مستقل برای ثبت و مدیریت درخواست خرید دلاری.</span>
       <a href="dashboard.html">ورود به داشبورد</a>
     </footer>
 

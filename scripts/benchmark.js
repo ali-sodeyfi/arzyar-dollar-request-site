@@ -61,7 +61,7 @@ async function main() {
   fs.mkdirSync(artifactDir, { recursive: true });
   const server = spawn(process.execPath, ["server.js"], {
     cwd: path.join(__dirname, ".."),
-    env: { ...process.env, PORT: String(port), SMS_PROVIDER: "mock", ADMIN_PHONE: "00989128477764" },
+    env: { ...process.env, PORT: String(port), SMS_PROVIDER: "mock", RATE_PROVIDER: "fallback", ADMIN_PHONE: "00989128477764" },
     stdio: ["ignore", "pipe", "pipe"]
   });
 
@@ -84,6 +84,10 @@ async function main() {
     await page.fill("input[name='fullName']", "کاربر تست بنچ‌مارک");
     await page.fill("input[name='phone']", "09121112222");
     await page.fill("input[name='email']", "bench@example.com");
+    await page.click("#sendPhoneCodeButton");
+    await page.waitForSelector("#phoneVerifyMessage[data-tone='success']", { timeout: 5000 });
+    await page.click("#verifyPhoneCodeButton");
+    await page.waitForSelector("#phoneVerifyMessage[data-tone='success']", { timeout: 5000 });
     await page.fill("input[name='targetUrl']", "https://example.com/checkout");
     await page.fill("input[name='amount']", "49");
     await page.fill("input[name='deadline']", "امروز");

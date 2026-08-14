@@ -1,4 +1,4 @@
-# Arzyar Dollar Request Site
+# Arzrah Dollar Request Site
 
 سایت فارسی/RTL برای ثبت درخواست خرید دلاری و پرداخت ارزی، همراه با داشبورد مدیریت درخواست‌ها.
 
@@ -6,6 +6,8 @@
 
 - نسخه GitHub Pages از فایل‌های static داخل `public/` منتشر می‌شود و برای دمو، درخواست‌ها را در مرورگر همان کاربر ذخیره می‌کند.
 - نسخه واقعی Node.js از `server.js` و `data/requests.json` استفاده می‌کند و درخواست‌ها را مرکزی ذخیره می‌کند.
+- لاگ ارسال پیامک‌ها در نسخه Node.js داخل `data/sms-log.jsonl` نوشته می‌شود.
+- لینک مستقیم درخواست‌ها در پیامک ادمین از `PUBLIC_BASE_URL` ساخته می‌شود. اگر تنظیم نشود، سرور از host همان درخواست استفاده می‌کند.
 
 ## اجرا
 
@@ -39,6 +41,7 @@ $env:SMS_PROVIDER="smsir"
 $env:SMSIR_API_KEY="YOUR_SMSIR_API_KEY"
 $env:SMSIR_LINE_NUMBER="YOUR_SMSIR_LINE_NUMBER"
 $env:ADMIN_PHONE="00989128477764"
+$env:PUBLIC_BASE_URL="https://your-domain.example"
 ```
 
 در اجرای محلی، `server.js` فایل `.env` را هم می‌خواند. این فایل داخل `.gitignore` است و نباید در GitHub ذخیره شود.
@@ -48,13 +51,17 @@ $env:ADMIN_PHONE="00989128477764"
 ```powershell
 $env:SMSIR_VERIFY_TEMPLATE_ID="YOUR_VERIFY_TEMPLATE_ID"
 $env:SMSIR_VERIFY_CODE_PARAMETER="Code"
+$env:SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID="YOUR_CUSTOMER_VERIFY_TEMPLATE_ID"
+$env:SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER="Code"
 ```
 
 نمونه متن قالب Verify:
 
 ```text
-کد ورود پنل آرزیار: #CODE#
+کد تایید ارزراه: #CODE#
 ```
+
+برای تایید موبایل مشتری هم قبل از ثبت درخواست، کد پیامکی ارسال می‌شود. در حالت production بهتر است `SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID` را روی یک قالب خدماتی/Verify تاییدشده بگذارید تا برای شماره‌هایی که پیامک تبلیغاتی را بسته‌اند قابل دریافت باشد. اگر این env خالی باشد، سرور از `SMSIR_VERIFY_TEMPLATE_ID` استفاده می‌کند و اگر آن هم خالی باشد پیام عادی bulk می‌فرستد.
 
 ## پیامک واقعی با کاوه‌نگار
 
@@ -72,16 +79,44 @@ $env:ADMIN_PHONE="00989128477764"
 ## رفتار پیامکی
 
 - ورود داشبورد: ارسال کد یک‌بارمصرف به شماره ادمین
+- قبل از ثبت درخواست: تایید شماره موبایل مشتری با کد پیامکی
 - ثبت درخواست: پیامک به ادمین و مشتری
 - تغییر وضعیت/مسئول/یادداشت در داشبورد: پیامک به ادمین
 - تغییر وضعیت: پیامک وضعیت جدید به مشتری
+- ثبت قیمت نهایی در داشبورد: پیامک قیمت نهایی و لینک پرداخت به مشتری
+
+## درگاه پرداخت
+
+کد اتصال زرین‌پال آماده است، اما برای پرداخت واقعی باید پذیرنده و دامنه عمومی پایدار داشته باشید:
+
+```powershell
+$env:PAYMENT_PROVIDER="zarinpal"
+$env:ZARINPAL_MERCHANT_ID="YOUR_MERCHANT_ID"
+$env:ZARINPAL_SANDBOX="false"
+$env:PUBLIC_BASE_URL="https://your-domain.example"
+```
+
+بعد از تنظیم این envها، ادمین می‌تواند از جزئیات هر درخواست لینک پرداخت بسازد. لینک برای مشتری پیامک می‌شود و callback پرداخت وضعیت درخواست را به `paid` تغییر می‌دهد.
+
+## نرخ ارز و برآورد
+
+برآورد اولیه در نسخه Node.js از نرخ‌های Bonbast گرفته می‌شود و به مدت ۵ دقیقه کش می‌شود:
+
+```powershell
+$env:RATE_PROVIDER="bonbast"
+$env:RATES_CACHE_TTL_SECONDS="300"
+$env:BONBAST_RATE_URL="https://www.bon-bast.com/"
+```
+
+اگر Bonbast لحظه‌ای در دسترس نباشد، سرور از کش قبلی یا `SAMPLE_USD_TOMAN` به عنوان fallback استفاده می‌کند. برای تست بدون اینترنت می‌توان `RATE_PROVIDER=fallback` گذاشت. قیمت نهایی همچنان در داشبورد توسط اپراتور ثبت و برای مشتری پیامک می‌شود.
 
 ## قابلیت‌ها
 
 - فرم ثبت درخواست خرید دلاری با اعتبارسنجی
+- تایید شماره موبایل مشتری قبل از ثبت درخواست
 - ذخیره درخواست‌ها در `data/requests.json`
-- برآورد نمونه کارمزد و مبلغ ریالی
-- داشبورد مدیریت با ورود پیامکی، آمار، جستجو، فیلتر، جزئیات، تغییر وضعیت، یادداشت داخلی و خروجی CSV
+- برآورد نمونه کارمزد و مبلغ ریالی بر اساس نرخ Bonbast
+- داشبورد مدیریت با ورود پیامکی، آمار، جستجو، فیلتر، جزئیات، تغییر وضعیت، ساخت لینک پرداخت، یادداشت داخلی و خروجی CSV
 - بنچ‌مارک محصول در `/benchmark`
 - اسکریپت بنچ‌مارک عملکرد و مسیرهای کلیدی با Playwright
 

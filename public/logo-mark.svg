@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">لوگوی ارزراه</title>
+  <desc id="desc">نشان مسیر پرداخت ارزی با کارت و فلش</desc>
   <rect width="64" height="64" rx="14" fill="#087b75"/>
   <path fill="#dff2ee" d="M14 20c0-3.3 2.7-6 6-6h24c3.3 0 6 2.7 6 6v24c0 3.3-2.7 6-6 6H20c-3.3 0-6-2.7-6-6V20Z" opacity=".18"/>
   <path fill="#fff" d="M20 22h24c2.2 0 4 1.8 4 4v2H16v-2c0-2.2 1.8-4 4-4Z"/>
