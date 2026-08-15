@@ -293,6 +293,9 @@
     document.querySelector("#detailService").textContent = serviceLabels[item.serviceType] || item.serviceType;
     document.querySelector("#detailAmount").textContent = `${formatter.format(item.amount)} ${item.currency}`;
     document.querySelector("#detailEstimate").textContent = toman(item.estimate?.estimatedToman);
+    document.querySelector("#detailRate").textContent = item.estimate?.rateToman
+      ? `${formatter.format(item.estimate.rateToman)} تومان (${item.estimate.rateSource || "نرخ"})`
+      : "-";
     document.querySelector("#detailFinalPrice").textContent = item.finalPriceToman ? toman(item.finalPriceToman) : "-";
     document.querySelector("#detailUrgent").textContent = item.urgent ? "فوری" : "عادی";
     const link = document.querySelector("#detailUrl");
