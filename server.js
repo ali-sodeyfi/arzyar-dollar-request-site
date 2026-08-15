@@ -5,11 +5,12 @@ const crypto = require("node:crypto");
 
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
-const DATA_DIR = path.join(ROOT_DIR, "data");
-const DATA_FILE = path.join(DATA_DIR, "requests.json");
-const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 
 loadEnvFile(path.join(ROOT_DIR, ".env"));
+
+const DATA_DIR = path.resolve(ROOT_DIR, process.env.DATA_DIR || "data");
+const DATA_FILE = path.join(DATA_DIR, "requests.json");
+const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 
 const PORT = Number(process.env.PORT || 4321);
 const ADMIN_TOKEN = crypto.randomBytes(32).toString("hex");

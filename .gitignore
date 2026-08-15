@@ -3,6 +3,7 @@ node_modules/
 *.log
 *.pid
 data/sms-log.jsonl
+data/requests.json
 deploy/
 .DS_Store
 Thumbs.db

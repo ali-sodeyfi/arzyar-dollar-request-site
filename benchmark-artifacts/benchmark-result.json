@@ -1,12 +1,12 @@
 {
-  "url": "http://localhost:4323",
+  "url": "http://localhost:44321",
   "checks": {
-    "homeLoadMs": 633,
-    "dashboardReadyMs": 672,
+    "homeLoadMs": 664,
+    "dashboardReadyMs": 655,
     "requestSubmit": true,
     "dashboardUpdateWorked": true,
-    "dashboardRows": 4,
-    "dashboardTotalText": "۴",
+    "dashboardRows": 1,
+    "dashboardTotalText": "۱",
     "mobileHorizontalOverflow": false,
     "heroImageVisible": true
   },

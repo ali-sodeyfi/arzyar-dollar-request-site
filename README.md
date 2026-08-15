@@ -5,8 +5,8 @@
 ## نسخه‌ها
 
 - نسخه GitHub Pages از فایل‌های static داخل `public/` منتشر می‌شود و برای دمو، درخواست‌ها را در مرورگر همان کاربر ذخیره می‌کند.
-- نسخه واقعی Node.js از `server.js` و `data/requests.json` استفاده می‌کند و درخواست‌ها را مرکزی ذخیره می‌کند.
-- لاگ ارسال پیامک‌ها در نسخه Node.js داخل `data/sms-log.jsonl` نوشته می‌شود.
+- نسخه واقعی Node.js از `server.js` و مسیر `DATA_DIR` استفاده می‌کند و درخواست‌ها را مرکزی ذخیره می‌کند.
+- اگر `DATA_DIR` تنظیم نشود، درخواست‌ها در `data/requests.json` و لاگ پیامک‌ها در `data/sms-log.jsonl` نوشته می‌شوند.
 - لینک مستقیم درخواست‌ها در پیامک ادمین از `PUBLIC_BASE_URL` ساخته می‌شود. اگر تنظیم نشود، سرور از host همان درخواست استفاده می‌کند.
 
 ## اجرا
@@ -14,6 +14,7 @@
 ```powershell
 $env:PORT="4321"
 $env:ADMIN_PHONE="00989128477764"
+$env:DATA_DIR="data"
 $env:SMS_PROVIDER="mock"
 & "C:\Users\pc\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe" server.js
 ```
