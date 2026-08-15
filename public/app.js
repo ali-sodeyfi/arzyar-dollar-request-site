@@ -1,5 +1,6 @@
 (function () {
   const toman = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 0 });
+  const amountFormatter = new Intl.NumberFormat("fa-IR", { maximumFractionDigits: 2 });
   const form = document.querySelector("#requestForm");
   const message = document.querySelector("#formMessage");
   const estimateText = document.querySelector("#estimateText");
@@ -149,16 +150,28 @@
     }
   }
 
+  function rateSourceLabel() {
+    return rateState.source === "bonbast" ? "نرخ Bonbast" : "نرخ موقت";
+  }
+
+  function selectedRateText(currency) {
+    return `${rateSourceLabel()} ${currency}: ${toman.format(rateFor(currency))} تومان`;
+  }
+
   function updateEstimate() {
     const amount = Number(form.elements.amount.value);
     const urgent = form.elements.urgent.checked;
     const currency = form.elements.currency.value;
-    const estimated = estimate(amount, urgent, currency);
-    estimateText.textContent = estimated ? `${toman.format(estimated)} تومان` : "مبلغ را وارد کنید";
+    const details = Number.isFinite(amount) && amount > 0 ? estimateDetails(amount, urgent, currency) : null;
+    estimateText.textContent = details ? `${toman.format(details.estimatedToman)} تومان` : "مبلغ را وارد کنید";
     if (estimateHint) {
-      estimateHint.textContent = rateState.source === "bonbast"
-        ? "بر اساس نرخ Bonbast؛ قیمت نهایی توسط اپراتور تایید می‌شود."
-        : "نرخ موقت است؛ قیمت نهایی توسط اپراتور تایید می‌شود.";
+      if (details) {
+        const baseToman = Math.round(amount * details.rateToman);
+        const feeAmount = Math.round((details.serviceFee + details.urgentFee) * 100) / 100;
+        estimateHint.textContent = `${selectedRateText(currency)}؛ مبلغ پایه: ${toman.format(baseToman)} تومان؛ کارمزد: ${amountFormatter.format(feeAmount)} ${currency}.`;
+      } else {
+        estimateHint.textContent = `${selectedRateText(currency)}؛ قیمت نهایی توسط اپراتور تایید می‌شود.`;
+      }
     }
   }
 
@@ -269,7 +282,10 @@
     try {
       const payload = await submitViaApiOrStatic(data);
       const request = payload.request;
-      setMessage(`درخواست شما با کد ${request.id} ثبت شد. برآورد نمونه: ${toman.format(request.estimate.estimatedToman)} تومان.`, "success");
+      const rateText = request.estimate?.rateToman
+        ? ` با نرخ ${toman.format(request.estimate.rateToman)} تومان`
+        : "";
+      setMessage(`درخواست شما با کد ${request.id} ثبت شد. برآورد نهایی${rateText}: ${toman.format(request.estimate.estimatedToman)} تومان.`, "success");
       form.reset();
       resetPhoneVerification();
       setPhoneVerifyMessage("", "");
