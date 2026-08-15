@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ارزراه | ثبت درخواست خرید دلاری</title>
-    <meta name="description" content="ثبت درخواست پرداخت ارزی، خرید اشتراک، گیفت کارت و پرداخت‌های بین‌المللی با داشبورد پیگیری.">
+    <title>ارزراه | پرداخت ارزی و خرید دلاری با قیمت شفاف</title>
+    <meta name="description" content="ثبت درخواست پرداخت ارزی، خرید اشتراک، اپلیکیشن‌فی، پی‌پال و پرداخت سایت خارجی با تایید موبایل، نرخ مرجع بن‌بست و اعلام قیمت نهایی قبل از پرداخت.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#087b75">
     <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=20260815-rate-detail">
+    <link rel="stylesheet" href="styles.css?v=20260815-growth">
   </head>
   <body>
     <header class="site-header" data-elevated="false">
@@ -22,7 +22,9 @@
       <nav class="top-nav" aria-label="ناوبری اصلی">
         <a href="#request">ثبت درخواست</a>
         <a href="#services">خدمات</a>
+        <a href="#fees">کارمزد</a>
         <a href="#process">فرآیند</a>
+        <a href="#faq">سوالات</a>
         <a href="benchmark.html">بنچ‌مارک</a>
       </nav>
       <a class="ghost-link" href="dashboard.html">داشبورد</a>
@@ -34,26 +36,26 @@
         <div class="hero-overlay"></div>
         <div class="hero-content">
           <div class="hero-copy">
-            <p class="eyebrow">ثبت و پیگیری خرید دلاری</p>
-            <h1 id="hero-title">خرید دلاری و پرداخت ارزی بدون دردسر</h1>
-            <p class="hero-lede">لینک خرید، مبلغ و توضیحات را ثبت کنید؛ ارزراه درخواست را با کد رهگیری، پیامک وضعیت و داشبورد پیگیری جلو می‌برد.</p>
+            <p class="eyebrow">پرداخت ارزی با مسیر شفاف</p>
+            <h1 id="hero-title">درخواست پرداخت دلاری را ثبت کنید؛ قیمت نهایی را قبل از پرداخت ببینید</h1>
+            <p class="hero-lede">لینک خرید، مبلغ و توضیحات غیرمحرمانه را وارد کنید. ارزراه اول شماره موبایل را تایید می‌کند، برآورد را با نرخ مرجع بن‌بست نشان می‌دهد و پس از بررسی اپراتور، قیمت نهایی و لینک پرداخت را پیامک می‌کند.</p>
             <div class="hero-actions">
               <a class="primary-button" href="#request">شروع ثبت درخواست</a>
-              <a class="secondary-button" href="#services">دیدن سرویس‌ها</a>
+              <a class="secondary-button" href="#fees">دیدن کارمزد</a>
             </div>
           </div>
           <dl class="hero-metrics" aria-label="شاخص‌های سرویس">
             <div>
-              <dt>۲۴/۷</dt>
-              <dd>پذیرش درخواست</dd>
+              <dt>Bonbast</dt>
+              <dd>مبنای برآورد نرخ</dd>
             </div>
             <div>
-              <dt>۱ ساعت</dt>
-              <dd>بررسی فوری</dd>
+              <dt>SMS</dt>
+              <dd>تایید شماره و اطلاع‌رسانی</dd>
             </div>
             <div>
-              <dt>۷ ارز</dt>
-              <dd>پشتیبانی اولیه</dd>
+              <dt>قبل پرداخت</dt>
+              <dd>اعلام قیمت نهایی</dd>
             </div>
           </dl>
         </div>
@@ -63,7 +65,7 @@
         <div class="section-head">
           <p class="eyebrow">فرم عملیاتی</p>
           <h2 id="request-title">ثبت درخواست خرید دلاری</h2>
-          <p>برای امنیت، رمز عبور یا اطلاعات محرمانه را در این فرم وارد نکنید. تیم پشتیبانی در صورت نیاز از مسیر امن پیگیری می‌کند.</p>
+          <p>برای امنیت، رمز عبور یا اطلاعات محرمانه را در این فرم وارد نکنید. فقط لینک، مبلغ، ارز و توضیحات لازم برای بررسی اولیه را ثبت کنید.</p>
         </div>
 
         <div class="request-layout">
@@ -162,10 +164,10 @@
 
             <div class="estimate-box" aria-live="polite">
               <div>
-                <span>برآورد نمونه</span>
-                <strong id="estimateText">مبلغ را وارد کنید</strong>
-              </div>
-              <small id="estimateHint">نرخ نهایی توسط اپراتور تایید می‌شود.</small>
+              <span>برآورد اولیه</span>
+              <strong id="estimateText">مبلغ را وارد کنید</strong>
+            </div>
+              <small id="estimateHint">قیمت نهایی بعد از بررسی اپراتور پیامک می‌شود.</small>
             </div>
 
             <div class="form-actions">
@@ -181,13 +183,13 @@
             <div class="status-card">
               <span class="status-dot"></span>
               <strong>جریان پیشنهادی</strong>
-              <p>ثبت درخواست، بررسی کارشناس، اعلام پیش‌فاکتور، پرداخت ریالی، انجام خرید و ارسال رسید.</p>
+              <p>ثبت درخواست، بررسی اپراتور، اعلام قیمت نهایی، پرداخت ریالی و سپس انجام خرید در صورت قابل انجام بودن پرداخت.</p>
             </div>
             <ul class="feature-list">
               <li>کد رهگیری خودکار برای هر درخواست</li>
-              <li>محاسبه کارمزد نمونه بر اساس مبلغ و فوریت</li>
+              <li>محاسبه برآورد اولیه با نرخ بن‌بست و کارمزد پلکانی</li>
               <li>داشبورد مدیریتی با جستجو، فیلتر و خروجی CSV</li>
-              <li>بدون دریافت رمز عبور در فرم عمومی</li>
+              <li>عدم دریافت رمز عبور در فرم عمومی</li>
             </ul>
           </aside>
         </div>
@@ -200,25 +202,90 @@
         </div>
         <div class="service-grid">
           <article>
-            <span aria-hidden="true">💳</span>
+            <span aria-hidden="true">Pay</span>
             <h3>پرداخت سایت خارجی</h3>
-            <p>پرداخت با کارت‌های بین‌المللی، پی‌پال یا invoice برای سرویس‌های مجاز.</p>
+            <p>ثبت لینک پرداخت، invoice یا checkout برای بررسی امکان پرداخت در سایت مقصد.</p>
           </article>
           <article>
-            <span aria-hidden="true">⚙</span>
+            <span aria-hidden="true">SaaS</span>
             <h3>اشتراک و نرم‌افزار</h3>
-            <p>تمدید ابزارهای کاری، هاستینگ، API، طراحی، مارکتینگ و آموزش.</p>
+            <p>خرید یا تمدید ابزارهای کاری، هاستینگ، API، طراحی، مارکتینگ و آموزش.</p>
           </article>
           <article>
-            <span aria-hidden="true">🎓</span>
+            <span aria-hidden="true">Uni</span>
             <h3>آزمون و دانشگاه</h3>
-            <p>ثبت‌نام آزمون، اپلیکیشن‌فی، ارسال مدارک و هزینه‌های دانشجویی.</p>
+            <p>اپلیکیشن‌فی، آزمون، ارسال مدارک و پرداخت‌های دانشجویی پس از بررسی جزئیات.</p>
           </article>
           <article>
-            <span aria-hidden="true">🎁</span>
+            <span aria-hidden="true">Gift</span>
             <h3>گیفت کارت</h3>
-            <p>درخواست خرید گیفت کارت با کشور، مبلغ و مقصد مصرف مشخص.</p>
+            <p>درخواست خرید گیفت کارت با کشور، مبلغ و مقصد مصرف مشخص و قابل بررسی.</p>
           </article>
+        </div>
+      </section>
+
+      <section class="trust-band" aria-labelledby="trust-title">
+        <div class="section-head compact">
+          <p class="eyebrow">شفافیت</p>
+          <h2 id="trust-title">چیزی را قبل از بررسی قطعی اعلام نمی‌کنیم</h2>
+          <p>پرداخت ارزی به قوانین سایت مقصد، روش پرداخت، کشور سرویس و محدودیت‌های حساب بستگی دارد. به همین دلیل ارزراه ابتدا برآورد می‌دهد، سپس اپراتور قیمت و امکان انجام را نهایی می‌کند.</p>
+        </div>
+        <div class="trust-grid">
+          <article>
+            <strong>بدون ادعای زمان قطعی</strong>
+            <p>زمان انجام بعد از بررسی درخواست و شرایط سایت مقصد اعلام می‌شود.</p>
+          </article>
+          <article>
+            <strong>بدون دریافت رمز در فرم</strong>
+            <p>در فرم عمومی فقط اطلاعات غیرمحرمانه وارد می‌شود. اگر اطلاعات بیشتری لازم باشد جداگانه هماهنگ می‌شود.</p>
+          </article>
+          <article>
+            <strong>پرداخت بعد از قیمت نهایی</strong>
+            <p>مشتری قبل از پرداخت ریالی، مبلغ نهایی و وضعیت درخواست را دریافت می‌کند.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="fees-band" id="fees" aria-labelledby="fees-title">
+        <div class="section-head compact">
+          <p class="eyebrow">کارمزد</p>
+          <h2 id="fees-title">برآورد اولیه چطور حساب می‌شود؟</h2>
+          <p>نرخ ارز از بن‌بست گرفته می‌شود و کارمزد به مبلغ ارزی اضافه می‌شود. این عدد برآورد اولیه است و قیمت نهایی بعد از بررسی اپراتور اعلام می‌شود.</p>
+        </div>
+        <div class="fee-table-wrap">
+          <table class="fee-table">
+            <thead>
+              <tr>
+                <th>مبلغ درخواست</th>
+                <th>کارمزد پایه</th>
+                <th>حداقل کارمزد</th>
+                <th>فوریت</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>تا ۱۰۰ دلار</td>
+                <td>۵.۵٪</td>
+                <td>۲ دلار</td>
+                <td rowspan="4">در صورت انتخاب فوریت: ۱.۵٪ اضافه، حداقل ۵ دلار</td>
+              </tr>
+              <tr>
+                <td>۱۰۱ تا ۵۰۰ دلار</td>
+                <td>۴.۵٪</td>
+                <td>۲ دلار</td>
+              </tr>
+              <tr>
+                <td>۵۰۱ تا ۲۰۰۰ دلار</td>
+                <td>۳.۵٪</td>
+                <td>۲ دلار</td>
+              </tr>
+              <tr>
+                <td>بیشتر از ۲۰۰۰ دلار</td>
+                <td>۲.۸٪</td>
+                <td>۲ دلار</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -234,25 +301,64 @@
           </li>
           <li>
             <strong>۲. بررسی کارشناس</strong>
-            <span>قابلیت پرداخت، کارمزد، فوریت و ریسک بررسی می‌شود.</span>
+            <span>قابلیت پرداخت، کارمزد، فوریت و محدودیت‌های احتمالی بررسی می‌شود.</span>
           </li>
           <li>
             <strong>۳. اعلام پیش‌فاکتور</strong>
-            <span>نرخ نهایی و مبلغ ریالی برای تایید مشتری ارسال می‌شود.</span>
+            <span>قیمت نهایی و مبلغ ریالی برای تایید مشتری ارسال می‌شود.</span>
           </li>
           <li>
             <strong>۴. انجام خرید</strong>
-            <span>پس از تسویه، پرداخت انجام و رسید در پرونده درخواست ثبت می‌شود.</span>
+            <span>پس از تسویه و در صورت قابل انجام بودن پرداخت، خرید انجام و رسید پیگیری می‌شود.</span>
           </li>
         </ol>
+      </section>
+
+      <section class="landing-pages-band" aria-labelledby="landing-pages-title">
+        <div class="section-head compact">
+          <p class="eyebrow">راهنمای درخواست</p>
+          <h2 id="landing-pages-title">پرداخت‌های رایج</h2>
+        </div>
+        <div class="landing-links">
+          <a href="foreign-payment.html">پرداخت دلاری سایت خارجی</a>
+          <a href="application-fee.html">پرداخت اپلیکیشن‌فی و دانشگاه</a>
+          <a href="subscription.html">خرید و تمدید اشتراک خارجی</a>
+          <a href="paypal-payment.html">درخواست پرداخت پی‌پال</a>
+          <a href="server-payment.html">خرید سرور، دامنه و ابزار خارجی</a>
+        </div>
+      </section>
+
+      <section class="faq-band" id="faq" aria-labelledby="faq-title">
+        <div class="section-head compact">
+          <p class="eyebrow">سوالات پرتکرار</p>
+          <h2 id="faq-title">قبل از ثبت درخواست</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>آیا قیمتی که فرم نشان می‌دهد قطعی است؟</summary>
+            <p>خیر. فرم فقط برآورد اولیه را با نرخ مرجع و فرمول کارمزد نشان می‌دهد. قیمت نهایی بعد از بررسی اپراتور پیامک می‌شود.</p>
+          </details>
+          <details>
+            <summary>آیا باید رمز اکانت مقصد را وارد کنم؟</summary>
+            <p>در فرم عمومی نه. فقط لینک، مبلغ، ارز و توضیح غیرمحرمانه را ثبت کنید.</p>
+          </details>
+          <details>
+            <summary>اگر پرداخت قابل انجام نباشد چه می‌شود؟</summary>
+            <p>اپراتور وضعیت را اعلام می‌کند و تا قبل از پرداخت ریالی، هزینه‌ای از مشتری دریافت نمی‌شود.</p>
+          </details>
+          <details>
+            <summary>چرا شماره موبایل باید تایید شود؟</summary>
+            <p>برای اینکه قیمت نهایی، تغییر وضعیت و لینک پرداخت به شماره درست ارسال شود.</p>
+          </details>
+        </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <span>ارزراه، نمونه اولیه مستقل برای ثبت و مدیریت درخواست خرید دلاری.</span>
+      <span>ارزراه، سامانه ثبت و پیگیری درخواست خرید دلاری با اعلام قیمت قبل از پرداخت.</span>
       <a href="dashboard.html">ورود به داشبورد</a>
     </footer>
 
-    <script src="app.js?v=20260815-rate-detail" defer></script>
+    <script src="app.js?v=20260815-growth" defer></script>
   </body>
 </html>

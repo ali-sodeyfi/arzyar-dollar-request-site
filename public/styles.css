@@ -342,7 +342,12 @@ h3 {
 
 .request-band,
 .services-band,
+.trust-band,
+.fees-band,
 .process-band,
+.landing-pages-band,
+.faq-band,
+.seo-page,
 .benchmark-page,
 .dashboard-shell {
   width: min(1180px, calc(100% - 32px));
@@ -351,7 +356,12 @@ h3 {
 
 .request-band,
 .services-band,
+.trust-band,
+.fees-band,
 .process-band,
+.landing-pages-band,
+.faq-band,
+.seo-page,
 .benchmark-page {
   padding: 54px 0;
 }
@@ -379,6 +389,7 @@ h3 {
 .tool-panel,
 .side-panel article,
 .service-grid article,
+.trust-grid article,
 .stat-grid article,
 .benchmark-grid article {
   border: 1px solid var(--line);
@@ -600,12 +611,16 @@ textarea:focus {
 .service-grid span {
   display: grid;
   place-items: center;
-  width: 44px;
+  min-width: 44px;
   height: 44px;
   margin-bottom: 14px;
+  padding: 0 8px;
   border-radius: 8px;
   background: #edf5f3;
-  font-size: 22px;
+  color: var(--teal-dark);
+  font-size: 13px;
+  font-weight: 900;
+  direction: ltr;
 }
 
 .service-grid p,
@@ -639,6 +654,182 @@ textarea:focus {
 .process-list span {
   margin-top: 10px;
   color: var(--muted);
+}
+
+.trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.trust-grid article {
+  padding: 20px;
+}
+
+.trust-grid strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.trust-grid p {
+  margin-bottom: 0;
+  color: var(--muted);
+}
+
+.fee-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.fee-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.fee-table th,
+.fee-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  vertical-align: middle;
+}
+
+.fee-table th {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.fee-table td:nth-child(2),
+.fee-table td:nth-child(3) {
+  color: var(--teal-dark);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-links {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landing-links a {
+  display: flex;
+  align-items: center;
+  min-height: 76px;
+  padding: 14px;
+  border: 1px solid #b7d9d5;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--teal-dark);
+  font-weight: 900;
+}
+
+.faq-list {
+  display: grid;
+  gap: 10px;
+}
+
+.faq-list details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.faq-list summary {
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.faq-list p {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.seo-page {
+  max-width: 1040px;
+}
+
+.seo-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+  padding-top: 42px;
+}
+
+.seo-hero h1 {
+  font-size: clamp(32px, 5vw, 58px);
+}
+
+.seo-card {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(23, 33, 38, 0.06);
+}
+
+.seo-card strong {
+  display: block;
+  margin-bottom: 10px;
+}
+
+.seo-card ul,
+.seo-content ul {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.seo-card li,
+.seo-content li {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfc;
+}
+
+.seo-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.seo-content article {
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.seo-content p {
+  color: var(--muted);
+}
+
+.seo-cta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.seo-cta p {
+  flex: 1 1 320px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .site-footer {
@@ -1021,6 +1212,10 @@ textarea:focus {
   }
 
   .service-grid,
+  .trust-grid,
+  .landing-links,
+  .seo-hero,
+  .seo-content,
   .process-list,
   .stat-grid,
   .benchmark-grid {
@@ -1069,6 +1264,10 @@ textarea:focus {
   .form-grid,
   .phone-verify-actions,
   .service-grid,
+  .trust-grid,
+  .landing-links,
+  .seo-hero,
+  .seo-content,
   .process-list,
   .stat-grid,
   .benchmark-grid,
