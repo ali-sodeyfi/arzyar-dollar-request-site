@@ -126,7 +126,8 @@ const contentTypes = {
   ".jpeg": "image/jpeg",
   ".webp": "image/webp",
   ".svg": "image/svg+xml; charset=utf-8",
-  ".ico": "image/x-icon"
+  ".ico": "image/x-icon",
+  ".woff2": "font/woff2"
 };
 
 function loadEnvFile(filePath) {
