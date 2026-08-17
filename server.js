@@ -1074,7 +1074,6 @@ async function handleApi(req, res, url) {
       const serviceType = cleanText(body.serviceType, 60);
       const targetUrl = normalizeUrl(body.targetUrl);
       const currency = cleanText(body.currency, 8).toUpperCase();
-      const paymentMethod = cleanText(body.paymentMethod, 80);
       const accountHint = cleanText(body.accountHint, 160);
       const description = cleanText(body.description, 1200);
       const deadline = cleanText(body.deadline, 40);
@@ -1106,7 +1105,6 @@ async function handleApi(req, res, url) {
         targetUrl,
         amount,
         currency,
-        paymentMethod,
         accountHint,
         description,
         deadline,
