@@ -86,6 +86,35 @@ $env:ADMIN_PHONE="00989128477764"
 - تغییر وضعیت: پیامک وضعیت جدید به مشتری
 - ثبت قیمت نهایی در داشبورد: پیامک قیمت نهایی و لینک پرداخت به مشتری
 
+## ورود گوگل داشبورد
+
+داشبورد علاوه بر ورود پیامکی مالک، از Google OAuth برای ورود مالک و کارشناسان پشتیبانی می‌کند. مالک اولیه از `ADMIN_EMAIL` ساخته می‌شود و فقط مالک می‌تواند از داخل داشبورد کارشناس جدید تعریف یا غیرفعال کند.
+
+روی سرور این envها را تنظیم کنید:
+
+```powershell
+$env:ADMIN_EMAIL="OWNER_GMAIL"
+$env:ADMIN_FIRST_NAME="OWNER_FIRST_NAME"
+$env:ADMIN_LAST_NAME="OWNER_LAST_NAME"
+$env:GOOGLE_OAUTH_CLIENT_ID="YOUR_GOOGLE_OAUTH_CLIENT_ID"
+$env:GOOGLE_OAUTH_CLIENT_SECRET="YOUR_GOOGLE_OAUTH_CLIENT_SECRET"
+$env:PUBLIC_BASE_URL="https://arzrah.ir"
+```
+
+در Google Cloud Console یک OAuth Client از نوع Web application بسازید و این Redirect URI را در بخش Authorized redirect URIs بگذارید:
+
+```text
+https://arzrah.ir/api/admin/google/callback
+```
+
+اگر لازم باشد می‌توانید Redirect URI را دستی هم تنظیم کنید:
+
+```powershell
+$env:GOOGLE_OAUTH_REDIRECT_URI="https://arzrah.ir/api/admin/google/callback"
+```
+
+کارشناسان در `data/staff.json` ذخیره می‌شوند و فقط ایمیل‌های فعال داخل همین فایل اجازه ورود با گوگل دارند. `GOOGLE_OAUTH_CLIENT_SECRET` نباید در GitHub یا فایل‌های public ذخیره شود.
+
 ## درگاه پرداخت
 
 کد اتصال زرین‌پال آماده است، اما برای پرداخت واقعی باید پذیرنده و دامنه عمومی پایدار داشته باشید:

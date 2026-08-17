@@ -4,6 +4,7 @@ node_modules/
 *.pid
 data/sms-log.jsonl
 data/requests.json
+data/staff.json
 deploy/
 .DS_Store
 Thumbs.db

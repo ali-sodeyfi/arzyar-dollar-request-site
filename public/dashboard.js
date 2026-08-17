@@ -1,5 +1,6 @@
 (function () {
   const tokenKey = "arzyarAdminToken";
+  const userKey = "arzyarAdminUser";
   const staticTokenPrefix = "static-admin-";
   const staticStorageKey = "arzyarStaticRequests";
   const loginCodeCooldownKey = "arzyarLoginCodeCooldownUntil";
@@ -8,7 +9,10 @@
   const loginForm = document.querySelector("#loginForm");
   const requestLoginCodeButton = document.querySelector("#requestLoginCodeButton");
   const loginMessage = document.querySelector("#loginMessage");
+  const googleLoginButton = document.querySelector("#googleLoginButton");
+  const googleLoginNote = document.querySelector("#googleLoginNote");
   const logoutButton = document.querySelector("#logoutButton");
+  const currentUserBadge = document.querySelector("#currentUser");
   const refreshButton = document.querySelector("#refreshButton");
   const exportLink = document.querySelector("#exportLink");
   const searchInput = document.querySelector("#searchInput");
@@ -16,6 +20,10 @@
   const tbody = document.querySelector("#requestsTbody");
   const adminForm = document.querySelector("#adminForm");
   const adminMessage = document.querySelector("#adminMessage");
+  const staffPanel = document.querySelector("#staffPanel");
+  const staffForm = document.querySelector("#staffForm");
+  const staffList = document.querySelector("#staffList");
+  const staffMessage = document.querySelector("#staffMessage");
   const paymentForm = document.querySelector("#paymentForm");
   const paymentMessage = document.querySelector("#paymentMessage");
   const paymentStatusText = document.querySelector("#paymentStatusText");
@@ -53,10 +61,35 @@
   };
 
   let requests = [];
+  let staffMembers = [];
+  let currentUser = readStoredUser();
   let selectedId = new URLSearchParams(window.location.search).get("request") || "";
 
   function token() {
     return localStorage.getItem(tokenKey) || "";
+  }
+
+  function readStoredUser() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(userKey) || "null");
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function storeUser(user) {
+    currentUser = user || null;
+    if (currentUser) {
+      localStorage.setItem(userKey, JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem(userKey);
+    }
+    renderCurrentUser();
+  }
+
+  function isOwner() {
+    return currentUser?.role === "owner";
   }
 
   function isStaticMode() {
@@ -115,11 +148,28 @@
     loginPanel.classList.toggle("is-hidden", show);
     dashboardApp.classList.toggle("is-hidden", !show);
     logoutButton.classList.toggle("is-hidden", !show);
+    currentUserBadge.classList.toggle("is-hidden", !show || !currentUser);
   }
 
   function setLoginMessage(text, tone) {
     loginMessage.textContent = text || "";
     loginMessage.dataset.tone = tone || "";
+  }
+
+  function setGoogleLoginNote(text, tone) {
+    googleLoginNote.textContent = text || "";
+    googleLoginNote.dataset.tone = tone || "";
+  }
+
+  function renderCurrentUser() {
+    if (!currentUser) {
+      currentUserBadge.textContent = "";
+      currentUserBadge.classList.add("is-hidden");
+      return;
+    }
+    const roleText = currentUser.role === "owner" ? "مالک" : "کارشناس";
+    currentUserBadge.textContent = `${currentUser.name || currentUser.email || "کاربر"} - ${roleText}`;
+    currentUserBadge.classList.toggle("is-hidden", dashboardApp.classList.contains("is-hidden"));
   }
 
   function isolateLtr(value) {
@@ -168,6 +218,11 @@
   function setAdminMessage(text, tone) {
     adminMessage.textContent = text || "";
     adminMessage.dataset.tone = tone || "";
+  }
+
+  function setStaffMessage(text, tone) {
+    staffMessage.textContent = text || "";
+    staffMessage.dataset.tone = tone || "";
   }
 
   function setPaymentMessage(text, tone) {
@@ -361,6 +416,22 @@
 
   async function api(path, options = {}) {
     if (isStaticMode()) {
+      if (path.includes("/me") && (!options.method || options.method === "GET")) {
+        return {
+          ok: true,
+          user: {
+            id: "static-owner",
+            email: "demo@example.com",
+            name: "مدیر دمو",
+            role: "owner",
+            active: true
+          },
+          auth: { googleEnabled: false }
+        };
+      }
+      if (path.includes("/staff") && (!options.method || options.method === "GET")) {
+        return { ok: true, staff: [] };
+      }
       if (path.includes("/requests") && (!options.method || options.method === "GET")) {
         return { ok: true, requests: readStaticRequests() };
       }
@@ -402,12 +473,102 @@
     });
     if (response.status === 401) {
       localStorage.removeItem(tokenKey);
+      storeUser(null);
       showDashboard(false);
       throw new Error("نشست مدیریتی منقضی شد.");
     }
     const payload = await response.json();
     if (!response.ok || !payload.ok) throw new Error(payload.error || "خطای ارتباط با سرور.");
     return payload;
+  }
+
+  async function loadAuthConfig() {
+    try {
+      const response = await fetch("/api/admin/auth-config", { headers: { Accept: "application/json" } });
+      const type = response.headers.get("content-type") || "";
+      if (!type.includes("application/json")) throw new Error("static");
+      const payload = await response.json();
+      const enabled = Boolean(payload.googleEnabled);
+      googleLoginButton.classList.toggle("is-disabled", !enabled);
+      googleLoginButton.setAttribute("aria-disabled", enabled ? "false" : "true");
+      googleLoginButton.href = enabled ? "/api/admin/google/start?returnTo=/dashboard" : "#";
+      setGoogleLoginNote(enabled ? "" : "ورود گوگل بعد از تنظیم OAuth روی سرور فعال می‌شود.", enabled ? "" : "error");
+    } catch {
+      googleLoginButton.classList.add("is-disabled");
+      googleLoginButton.setAttribute("aria-disabled", "true");
+      googleLoginButton.href = "#";
+      setGoogleLoginNote("ورود گوگل در نسخه استاتیک فعال نیست.", "error");
+    }
+  }
+
+  async function loadMe() {
+    const payload = await api("/api/admin/me");
+    storeUser(payload.user || null);
+    return payload.user || null;
+  }
+
+  function renderStaff() {
+    const owner = isOwner();
+    staffPanel.classList.toggle("is-hidden", !owner);
+    if (!owner) {
+      staffList.innerHTML = "";
+      return;
+    }
+
+    staffList.innerHTML = "";
+    if (!staffMembers.length) {
+      const empty = document.createElement("p");
+      empty.className = "table-empty staff-empty";
+      empty.textContent = "کارشناسی ثبت نشده است.";
+      staffList.append(empty);
+      return;
+    }
+
+    for (const member of staffMembers) {
+      const row = document.createElement("article");
+      row.className = "staff-row";
+
+      const meta = document.createElement("div");
+      meta.className = "staff-meta";
+      const name = document.createElement("strong");
+      const email = document.createElement("small");
+      name.textContent = member.name || [member.firstName, member.lastName].filter(Boolean).join(" ") || member.email;
+      email.textContent = member.email;
+      meta.append(name, email);
+
+      const role = document.createElement("span");
+      role.className = "staff-role";
+      role.textContent = member.role === "owner" ? "مالک" : "کارشناس";
+
+      const action = document.createElement("button");
+      action.type = "button";
+      action.className = member.active ? "button-link staff-toggle" : "secondary-button staff-toggle";
+      action.dataset.staffId = member.id;
+      action.dataset.staffAction = member.active ? "deactivate" : "activate";
+      action.textContent = member.role === "owner" ? "فعال" : member.active ? "غیرفعال کردن" : "فعال کردن";
+      action.disabled = member.role === "owner";
+
+      row.append(meta, role, action);
+      staffList.append(row);
+    }
+  }
+
+  async function loadStaff() {
+    if (!isOwner()) {
+      staffMembers = [];
+      renderStaff();
+      return;
+    }
+    const payload = await api("/api/admin/staff");
+    staffMembers = payload.staff || [];
+    renderStaff();
+  }
+
+  async function enterDashboard() {
+    showDashboard(true);
+    await loadMe();
+    await loadStaff();
+    await loadRequests();
   }
 
   async function loadRequests() {
@@ -423,6 +584,10 @@
       selectRequest(requests[0].id);
     }
   }
+
+  googleLoginButton.addEventListener("click", (event) => {
+    if (googleLoginButton.classList.contains("is-disabled")) event.preventDefault();
+  });
 
   requestLoginCodeButton.addEventListener("click", async () => {
     if (requestLoginCodeButton.disabled) return;
@@ -481,21 +646,21 @@
       if (!type.includes("application/json")) {
         if (String(data.code || data.pin || "") !== "2468") throw new Error("کد ورود درست نیست.");
         localStorage.setItem(tokenKey, `${staticTokenPrefix}${Date.now()}`);
-        showDashboard(true);
-        await loadRequests();
+        storeUser({ id: "static-owner", email: "demo@example.com", name: "مدیر دمو", role: "owner", active: true });
+        await enterDashboard();
         return;
       }
       const payload = await response.json();
       if (!response.ok || !payload.ok) throw new Error(payload.error || "ورود انجام نشد.");
       localStorage.setItem(tokenKey, payload.token);
+      storeUser(payload.user || null);
       exportLink.href = `api/admin/export.csv?token=${encodeURIComponent(payload.token)}`;
-      showDashboard(true);
-      await loadRequests();
+      await enterDashboard();
     } catch (error) {
       if (String(data.code || data.pin || "") === "2468" && !error.message.includes("کد ورود")) {
         localStorage.setItem(tokenKey, `${staticTokenPrefix}${Date.now()}`);
-        showDashboard(true);
-        await loadRequests();
+        storeUser({ id: "static-owner", email: "demo@example.com", name: "مدیر دمو", role: "owner", active: true });
+        await enterDashboard();
         return;
       }
       setLoginMessage(error.message, "error");
@@ -503,7 +668,13 @@
   });
 
   logoutButton.addEventListener("click", () => {
+    if (token() && !isStaticMode()) {
+      api("/api/admin/logout", { method: "POST", body: "{}" }).catch(() => {});
+    }
     localStorage.removeItem(tokenKey);
+    storeUser(null);
+    staffMembers = [];
+    renderStaff();
     selectedId = "";
     const url = new URL(window.location.href);
     url.searchParams.delete("request");
@@ -517,6 +688,50 @@
 
   searchInput.addEventListener("input", renderRows);
   statusFilter.addEventListener("change", renderRows);
+
+  staffForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    setStaffMessage("", "");
+    const button = staffForm.querySelector("button[type='submit']");
+    const data = Object.fromEntries(new FormData(staffForm).entries());
+    button.disabled = true;
+    button.textContent = "در حال ثبت...";
+    try {
+      const payload = await api("/api/admin/staff", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+      staffMembers = payload.staff || [];
+      staffForm.reset();
+      renderStaff();
+      setStaffMessage("کارشناس ثبت شد.", "success");
+    } catch (error) {
+      setStaffMessage(error.message, "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = "ثبت کارشناس";
+    }
+  });
+
+  staffList.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-staff-action]");
+    if (!button || button.disabled) return;
+    setStaffMessage("", "");
+    const active = button.dataset.staffAction === "activate";
+    button.disabled = true;
+    try {
+      const payload = await api(`/api/admin/staff/${encodeURIComponent(button.dataset.staffId)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ active })
+      });
+      staffMembers = payload.staff || [];
+      renderStaff();
+      setStaffMessage(active ? "دسترسی کارشناس فعال شد." : "دسترسی کارشناس غیرفعال شد.", "success");
+    } catch (error) {
+      button.disabled = false;
+      setStaffMessage(error.message, "error");
+    }
+  });
 
   paymentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -566,10 +781,15 @@
     }
   });
 
+  loadAuthConfig();
+  renderCurrentUser();
   if (token()) {
     updateExportLink();
-    showDashboard(true);
-    loadRequests().catch(() => showDashboard(false));
+    enterDashboard().catch(() => {
+      localStorage.removeItem(tokenKey);
+      storeUser(null);
+      showDashboard(false);
+    });
   } else {
     showDashboard(false);
   }

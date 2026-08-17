@@ -10,11 +10,16 @@ loadEnvFile(path.join(ROOT_DIR, ".env"));
 
 const DATA_DIR = path.resolve(ROOT_DIR, process.env.DATA_DIR || "data");
 const DATA_FILE = path.join(DATA_DIR, "requests.json");
+const STAFF_FILE = path.join(DATA_DIR, "staff.json");
 const SMS_LOG_FILE = path.join(DATA_DIR, "sms-log.jsonl");
 
 const PORT = Number(process.env.PORT || 4321);
 const ADMIN_TOKEN = crypto.randomBytes(32).toString("hex");
 const ADMIN_PHONE = normalizePhone(process.env.ADMIN_PHONE || "00989128477764");
+const ADMIN_EMAIL = normalizeEmail(process.env.ADMIN_EMAIL || "");
+const ADMIN_FIRST_NAME = cleanText(process.env.ADMIN_FIRST_NAME || "", 80);
+const ADMIN_LAST_NAME = cleanText(process.env.ADMIN_LAST_NAME || "", 80);
+const ADMIN_SESSION_TTL_MS = Number(process.env.ADMIN_SESSION_TTL_SECONDS || 86400) * 1000;
 const SMS_PROVIDER = (
   process.env.SMS_PROVIDER ||
   (process.env.SMSIR_API_KEY ? "smsir" : process.env.KAVENEGAR_API_KEY ? "kavenegar" : "mock")
@@ -30,6 +35,10 @@ const SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER = process.env.SMSIR_CUSTOMER_VERIFY_C
 const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
 const SMS_WEBHOOK_TOKEN = process.env.SMS_WEBHOOK_TOKEN || "";
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+const GOOGLE_OAUTH_CLIENT_ID = cleanText(process.env.GOOGLE_OAUTH_CLIENT_ID || "", 300);
+const GOOGLE_OAUTH_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET || "";
+const GOOGLE_OAUTH_REDIRECT_URI = cleanText(process.env.GOOGLE_OAUTH_REDIRECT_URI || "", 700);
+const GOOGLE_OAUTH_STATE_TTL_MS = Number(process.env.GOOGLE_OAUTH_STATE_TTL_SECONDS || 600) * 1000;
 const GOOGLE_ADS_CONVERSION_ID = normalizeGoogleAdsConversionId(
   process.env.GOOGLE_ADS_CONVERSION_ID || process.env.GOOGLE_ADS_ID || ""
 );
@@ -53,6 +62,8 @@ const RATE_SOURCE_URLS = [
 ].filter(Boolean);
 
 let adminOtp = null;
+const adminSessions = new Map();
+const googleOauthStates = new Map();
 const customerPhoneOtps = new Map();
 const customerPhoneVerificationTokens = new Map();
 let ratesCache = null;
@@ -156,28 +167,40 @@ function loadEnvFile(filePath) {
   }
 }
 
-function ensureDataFile() {
-  fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, "[]\n", "utf8");
+function ensureJsonArrayFile(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  if (!fs.existsSync(filePath)) {
+    fs.writeFileSync(filePath, "[]\n", "utf8");
   }
 }
 
-function readRequests() {
-  ensureDataFile();
+function readJsonArrayFile(filePath) {
+  ensureJsonArrayFile(filePath);
   try {
-    const parsed = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+    const parsed = JSON.parse(fs.readFileSync(filePath, "utf8"));
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
 }
 
+function writeJsonArrayFile(filePath, items) {
+  ensureJsonArrayFile(filePath);
+  const tmpFile = `${filePath}.${process.pid}.tmp`;
+  fs.writeFileSync(tmpFile, `${JSON.stringify(items, null, 2)}\n`, "utf8");
+  fs.renameSync(tmpFile, filePath);
+}
+
+function ensureDataFile() {
+  ensureJsonArrayFile(DATA_FILE);
+}
+
+function readRequests() {
+  return readJsonArrayFile(DATA_FILE);
+}
+
 function writeRequests(requests) {
-  ensureDataFile();
-  const tmpFile = `${DATA_FILE}.${process.pid}.tmp`;
-  fs.writeFileSync(tmpFile, `${JSON.stringify(requests, null, 2)}\n`, "utf8");
-  fs.renameSync(tmpFile, DATA_FILE);
+  writeJsonArrayFile(DATA_FILE, requests);
 }
 
 function sendJson(res, statusCode, payload) {
@@ -230,6 +253,14 @@ function cleanText(value, max = 500) {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, max);
+}
+
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizeEmail(value));
 }
 
 function normalizePhone(value) {
@@ -383,6 +414,300 @@ function dashboardRequestUrl(req, requestId) {
 function paymentCallbackUrl(req, requestId) {
   const base = (PUBLIC_BASE_URL || requestOrigin(req)).replace(/\/+$/, "");
   return `${base}/api/payment/callback?requestId=${encodeURIComponent(requestId)}`;
+}
+
+function googleOAuthRedirectUri(req) {
+  if (GOOGLE_OAUTH_REDIRECT_URI) return GOOGLE_OAUTH_REDIRECT_URI;
+  const base = (PUBLIC_BASE_URL || requestOrigin(req)).replace(/\/+$/, "");
+  return `${base}/api/admin/google/callback`;
+}
+
+function googleOAuthEnabled() {
+  return Boolean(GOOGLE_OAUTH_CLIENT_ID && GOOGLE_OAUTH_CLIENT_SECRET);
+}
+
+function safeReturnTo(value) {
+  const text = cleanText(value || "/dashboard", 500);
+  if (text.startsWith("/") && !text.startsWith("//")) return text;
+  return "/dashboard";
+}
+
+function cleanupGoogleOAuthStates(now = Date.now()) {
+  for (const [state, item] of googleOauthStates) {
+    if (!item || now > item.expiresAt) googleOauthStates.delete(state);
+  }
+}
+
+function createGoogleOAuthState(returnTo, redirectUri) {
+  cleanupGoogleOAuthStates();
+  const state = crypto.randomBytes(24).toString("hex");
+  googleOauthStates.set(state, {
+    returnTo: safeReturnTo(returnTo),
+    redirectUri,
+    expiresAt: Date.now() + GOOGLE_OAUTH_STATE_TTL_MS
+  });
+  return state;
+}
+
+function consumeGoogleOAuthState(state) {
+  cleanupGoogleOAuthStates();
+  const item = googleOauthStates.get(state);
+  if (!item) return null;
+  googleOauthStates.delete(state);
+  return item;
+}
+
+function htmlEscape(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function scriptJson(value) {
+  return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (char) => {
+    const code = char.charCodeAt(0).toString(16).padStart(4, "0");
+    return `\\u${code}`;
+  });
+}
+
+function authResultHtml({ title, text, tone = "error", session = null, returnTo = "/dashboard" }) {
+  const successScript = session
+    ? `<script>
+      const payload = ${scriptJson({ token: session.token, user: session.user, returnTo: safeReturnTo(returnTo) })};
+      localStorage.setItem("arzyarAdminToken", payload.token);
+      localStorage.setItem("arzyarAdminUser", JSON.stringify(payload.user));
+      window.location.replace(payload.returnTo || "/dashboard");
+    </script>`
+    : "";
+  return `<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${htmlEscape(title)}</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="benchmark-page">
+      <section class="tool-panel" style="margin-top:40px;padding:28px">
+        <p class="eyebrow">${tone === "success" ? "ورود موفق" : "ورود ناموفق"}</p>
+        <h1>${htmlEscape(title)}</h1>
+        <p>${htmlEscape(text)}</p>
+        <a class="primary-button" href="/dashboard">بازگشت به داشبورد</a>
+      </section>
+    </main>
+    ${successScript}
+  </body>
+</html>`;
+}
+
+function makeStaffId(email) {
+  const digest = crypto.createHash("sha1").update(normalizeEmail(email)).digest("hex").slice(0, 12);
+  return `stf_${digest}`;
+}
+
+function staffDisplayName(staff) {
+  return [staff.firstName, staff.lastName].filter(Boolean).join(" ") || staff.email || "مدیر";
+}
+
+function publicStaff(staff) {
+  return {
+    id: staff.id,
+    email: staff.email,
+    firstName: staff.firstName || "",
+    lastName: staff.lastName || "",
+    name: staffDisplayName(staff),
+    role: staff.role === "owner" ? "owner" : "expert",
+    active: staff.active !== false,
+    createdAt: staff.createdAt || "",
+    updatedAt: staff.updatedAt || ""
+  };
+}
+
+function normalizeStaffMember(item, now = new Date().toISOString()) {
+  const email = normalizeEmail(item?.email);
+  if (!isValidEmail(email)) return null;
+  return {
+    id: cleanText(item.id, 80) || makeStaffId(email),
+    email,
+    firstName: cleanText(item.firstName, 80),
+    lastName: cleanText(item.lastName, 80),
+    role: item.role === "owner" ? "owner" : "expert",
+    active: item.active !== false,
+    createdAt: cleanText(item.createdAt, 40) || now,
+    updatedAt: cleanText(item.updatedAt, 40) || now
+  };
+}
+
+function ownerStaffSeed(now = new Date().toISOString()) {
+  if (!ADMIN_EMAIL || !isValidEmail(ADMIN_EMAIL)) return null;
+  return {
+    id: makeStaffId(ADMIN_EMAIL),
+    email: ADMIN_EMAIL,
+    firstName: ADMIN_FIRST_NAME,
+    lastName: ADMIN_LAST_NAME,
+    role: "owner",
+    active: true,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function writeStaff(staff) {
+  writeJsonArrayFile(STAFF_FILE, staff.map((item) => normalizeStaffMember(item)).filter(Boolean));
+}
+
+function readStaff() {
+  const now = new Date().toISOString();
+  const owner = ownerStaffSeed(now);
+  if (!owner && !fs.existsSync(STAFF_FILE)) return [];
+
+  const byEmail = new Map();
+  let changed = false;
+
+  for (const item of readJsonArrayFile(STAFF_FILE)) {
+    const normalized = normalizeStaffMember(item, now);
+    if (!normalized) {
+      changed = true;
+      continue;
+    }
+    if (byEmail.has(normalized.email)) changed = true;
+    byEmail.set(normalized.email, normalized);
+  }
+
+  if (owner) {
+    const current = byEmail.get(owner.email);
+    if (current) {
+      if (current.role !== "owner" || current.active === false || current.id !== owner.id) changed = true;
+      current.id = owner.id;
+      current.role = "owner";
+      current.active = true;
+      if (!current.firstName && owner.firstName) current.firstName = owner.firstName;
+      if (!current.lastName && owner.lastName) current.lastName = owner.lastName;
+      byEmail.set(owner.email, current);
+    } else {
+      byEmail.set(owner.email, owner);
+      changed = true;
+    }
+  }
+
+  const staff = [...byEmail.values()].sort((a, b) => {
+    if (a.role !== b.role) return a.role === "owner" ? -1 : 1;
+    return (a.createdAt || "").localeCompare(b.createdAt || "");
+  });
+
+  if (changed) writeStaff(staff);
+  return staff;
+}
+
+function findStaffByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+  return readStaff().find((item) => item.email === normalizedEmail) || null;
+}
+
+function ownerAdminUser() {
+  const owner = readStaff().find((item) => item.role === "owner" && item.active !== false);
+  if (owner) return publicStaff(owner);
+  return {
+    id: "owner",
+    email: ADMIN_EMAIL,
+    firstName: ADMIN_FIRST_NAME,
+    lastName: ADMIN_LAST_NAME,
+    name: [ADMIN_FIRST_NAME, ADMIN_LAST_NAME].filter(Boolean).join(" ") || "مدیر ارزراه",
+    role: "owner",
+    active: true,
+    createdAt: "",
+    updatedAt: ""
+  };
+}
+
+function cleanupAdminSessions(now = Date.now()) {
+  for (const [token, session] of adminSessions) {
+    if (!session || now > session.expiresAt) adminSessions.delete(token);
+  }
+}
+
+function createAdminSession(staff, provider) {
+  cleanupAdminSessions();
+  const token = crypto.randomBytes(32).toString("hex");
+  const now = new Date().toISOString();
+  const user = publicStaff(staff);
+  adminSessions.set(token, {
+    user,
+    provider,
+    createdAt: now,
+    expiresAt: Date.now() + ADMIN_SESSION_TTL_MS
+  });
+  return {
+    token,
+    user,
+    provider,
+    expiresInSeconds: Math.round(ADMIN_SESSION_TTL_MS / 1000)
+  };
+}
+
+function sessionFromToken(token) {
+  cleanupAdminSessions();
+  if (!token) return null;
+  if (token === ADMIN_TOKEN) {
+    return { user: ownerAdminUser(), provider: "legacy", expiresAt: Date.now() + ADMIN_SESSION_TTL_MS };
+  }
+  const session = adminSessions.get(token);
+  if (!session) return null;
+  if (Date.now() > session.expiresAt) {
+    adminSessions.delete(token);
+    return null;
+  }
+  return session;
+}
+
+function deleteAdminSession(token) {
+  if (token) adminSessions.delete(token);
+}
+
+function adminTokenFromRequest(req, url) {
+  const auth = req.headers.authorization || "";
+  return auth.startsWith("Bearer ") ? auth.slice(7) : url.searchParams.get("token") || "";
+}
+
+async function exchangeGoogleOAuthCode(code, redirectUri) {
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json"
+    },
+    body: new URLSearchParams({
+      code,
+      client_id: GOOGLE_OAUTH_CLIENT_ID,
+      client_secret: GOOGLE_OAUTH_CLIENT_SECRET,
+      redirect_uri: redirectUri,
+      grant_type: "authorization_code"
+    })
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error_description || payload.error || "تبادل کد گوگل ناموفق بود.");
+  }
+  if (!payload.access_token) throw new Error("توکن دسترسی گوگل دریافت نشد.");
+  return payload;
+}
+
+async function fetchGoogleUserInfo(accessToken) {
+  const response = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error_description || payload.error || "دریافت اطلاعات حساب گوگل ناموفق بود.");
+  }
+  return payload;
 }
 
 function zarinpalBaseUrl() {
@@ -914,10 +1239,17 @@ async function notifyRequestUpdated(request, changedFields, statusChanged) {
 }
 
 function requireAdmin(req, res, url) {
-  const auth = req.headers.authorization || "";
-  const token = auth.startsWith("Bearer ") ? auth.slice(7) : url.searchParams.get("token") || "";
-  if (token !== ADMIN_TOKEN) {
+  const session = sessionFromToken(adminTokenFromRequest(req, url));
+  if (!session) {
     sendJson(res, 401, { ok: false, error: "دسترسی مدیریتی معتبر نیست." });
+    return null;
+  }
+  return session.user;
+}
+
+function requireOwner(user, res) {
+  if (!user || user.role !== "owner") {
+    sendJson(res, 403, { ok: false, error: "فقط مالک پنل به مدیریت کارشناسان دسترسی دارد." });
     return false;
   }
   return true;
@@ -1193,6 +1525,106 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/admin/auth-config") {
+    sendJson(res, 200, {
+      ok: true,
+      googleEnabled: googleOAuthEnabled(),
+      ownerEmailConfigured: Boolean(ADMIN_EMAIL),
+      redirectUri: googleOAuthRedirectUri(req)
+    });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/google/start") {
+    if (!googleOAuthEnabled()) {
+      sendText(
+        res,
+        503,
+        authResultHtml({
+          title: "ورود گوگل هنوز فعال نیست",
+          text: "برای فعال شدن ورود گوگل باید GOOGLE_OAUTH_CLIENT_ID و GOOGLE_OAUTH_CLIENT_SECRET روی سرور تنظیم شود."
+        }),
+        "text/html; charset=utf-8"
+      );
+      return;
+    }
+    const redirectUri = googleOAuthRedirectUri(req);
+    const state = createGoogleOAuthState(url.searchParams.get("returnTo"), redirectUri);
+    const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+    authUrl.searchParams.set("client_id", GOOGLE_OAUTH_CLIENT_ID);
+    authUrl.searchParams.set("redirect_uri", redirectUri);
+    authUrl.searchParams.set("response_type", "code");
+    authUrl.searchParams.set("scope", "openid email profile");
+    authUrl.searchParams.set("state", state);
+    authUrl.searchParams.set("prompt", "select_account");
+    res.writeHead(302, {
+      Location: authUrl.toString(),
+      "Cache-Control": "no-store"
+    });
+    res.end();
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/google/callback") {
+    try {
+      const oauthError = cleanText(url.searchParams.get("error"), 180);
+      if (oauthError) throw new Error(`ورود گوگل لغو شد یا خطا داد: ${oauthError}`);
+      const stateItem = consumeGoogleOAuthState(cleanText(url.searchParams.get("state"), 120));
+      if (!stateItem) throw new Error("نشست ورود گوگل منقضی شده است. دوباره تلاش کنید.");
+      const code = cleanText(url.searchParams.get("code"), 2000);
+      if (!code) throw new Error("کد ورود گوگل دریافت نشد.");
+
+      const tokenPayload = await exchangeGoogleOAuthCode(code, stateItem.redirectUri);
+      const userInfo = await fetchGoogleUserInfo(tokenPayload.access_token);
+      const email = normalizeEmail(userInfo.email);
+      const verified =
+        userInfo.email_verified === true ||
+        userInfo.email_verified === "true" ||
+        userInfo.verified_email === true ||
+        userInfo.verified_email === "true";
+      if (!email || !verified) throw new Error("ایمیل گوگل تایید نشده است.");
+
+      const staff = findStaffByEmail(email);
+      if (!staff || staff.active === false) {
+        sendText(
+          res,
+          403,
+          authResultHtml({
+            title: "این حساب به پنل دسترسی ندارد",
+            text: "ایمیل گوگل شما هنوز در لیست کارشناسان ارزراه ثبت نشده است."
+          }),
+          "text/html; charset=utf-8"
+        );
+        return;
+      }
+
+      const session = createAdminSession(staff, "google");
+      sendText(
+        res,
+        200,
+        authResultHtml({
+          title: "ورود انجام شد",
+          text: "در حال انتقال به داشبورد هستید.",
+          tone: "success",
+          session,
+          returnTo: stateItem.returnTo
+        }),
+        "text/html; charset=utf-8"
+      );
+    } catch (error) {
+      sendText(
+        res,
+        400,
+        authResultHtml({
+          title: "ورود گوگل انجام نشد",
+          text: error.message || "لطفا دوباره تلاش کنید."
+        }),
+        "text/html; charset=utf-8"
+      );
+    }
+    return;
+  }
+
   if (req.method === "POST" && url.pathname === "/api/admin/login-code") {
     try {
       if (!ADMIN_PHONE) {
@@ -1246,7 +1678,8 @@ async function handleApi(req, res, url) {
       }
       if (hashOtp(code) === adminOtp.hash) {
         adminOtp = null;
-        sendJson(res, 200, { ok: true, token: ADMIN_TOKEN });
+        const session = createAdminSession(ownerAdminUser(), "sms");
+        sendJson(res, 200, { ok: true, ...session });
         return;
       }
       sendJson(res, 403, { ok: false, error: "کد ورود درست نیست." });
@@ -1258,7 +1691,118 @@ async function handleApi(req, res, url) {
   }
 
   if (url.pathname.startsWith("/api/admin/")) {
-    if (!requireAdmin(req, res, url)) return;
+    const adminUser = requireAdmin(req, res, url);
+    if (!adminUser) return;
+
+    if (req.method === "GET" && url.pathname === "/api/admin/me") {
+      sendJson(res, 200, {
+        ok: true,
+        user: adminUser,
+        auth: {
+          googleEnabled: googleOAuthEnabled(),
+          ownerEmailConfigured: Boolean(ADMIN_EMAIL)
+        }
+      });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/admin/logout") {
+      deleteAdminSession(adminTokenFromRequest(req, url));
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    if (req.method === "GET" && url.pathname === "/api/admin/staff") {
+      if (!requireOwner(adminUser, res)) return;
+      sendJson(res, 200, { ok: true, staff: readStaff().map(publicStaff) });
+      return;
+    }
+
+    if (req.method === "POST" && url.pathname === "/api/admin/staff") {
+      if (!requireOwner(adminUser, res)) return;
+      try {
+        const body = await parseBody(req);
+        const email = normalizeEmail(body.email);
+        if (!isValidEmail(email)) {
+          sendJson(res, 422, { ok: false, error: "ایمیل گوگل معتبر نیست." });
+          return;
+        }
+        const firstName = cleanText(body.firstName, 80);
+        const lastName = cleanText(body.lastName, 80);
+        if (!firstName || !lastName) {
+          sendJson(res, 422, { ok: false, error: "نام و نام خانوادگی کارشناس را وارد کنید." });
+          return;
+        }
+        const now = new Date().toISOString();
+        const staff = readStaff();
+        const existingIndex = staff.findIndex((item) => item.email === email);
+        const nextMember = {
+          id: existingIndex >= 0 ? staff[existingIndex].id : makeStaffId(email),
+          email,
+          firstName,
+          lastName,
+          role: existingIndex >= 0 ? staff[existingIndex].role : "expert",
+          active: true,
+          createdAt: existingIndex >= 0 ? staff[existingIndex].createdAt : now,
+          updatedAt: now
+        };
+        if (nextMember.role === "owner") {
+          nextMember.active = true;
+        }
+        if (existingIndex >= 0) staff[existingIndex] = nextMember;
+        else staff.push(nextMember);
+        writeStaff(staff);
+        sendJson(res, 200, { ok: true, staff: readStaff().map(publicStaff), member: publicStaff(nextMember) });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message || "ثبت کارشناس انجام نشد." });
+      }
+      return;
+    }
+
+    const staffMatch = url.pathname.match(/^\/api\/admin\/staff\/([^/]+)$/);
+    if (req.method === "PATCH" && staffMatch) {
+      if (!requireOwner(adminUser, res)) return;
+      try {
+        const id = decodeURIComponent(staffMatch[1]);
+        const body = await parseBody(req);
+        const staff = readStaff();
+        const index = staff.findIndex((item) => item.id === id);
+        if (index === -1) {
+          sendJson(res, 404, { ok: false, error: "کارشناس پیدا نشد." });
+          return;
+        }
+        const current = staff[index];
+        const next = { ...current };
+        if ("email" in body) {
+          const email = normalizeEmail(body.email);
+          if (!isValidEmail(email)) {
+            sendJson(res, 422, { ok: false, error: "ایمیل گوگل معتبر نیست." });
+            return;
+          }
+          const duplicate = staff.find((item) => item.email === email && item.id !== id);
+          if (duplicate) {
+            sendJson(res, 409, { ok: false, error: "این ایمیل قبلا ثبت شده است." });
+            return;
+          }
+          next.email = email;
+          next.id = next.role === "owner" ? makeStaffId(email) : current.id;
+        }
+        if ("firstName" in body) next.firstName = cleanText(body.firstName, 80);
+        if ("lastName" in body) next.lastName = cleanText(body.lastName, 80);
+        if ("active" in body) next.active = Boolean(body.active);
+        if (current.role === "owner") {
+          next.role = "owner";
+          next.active = true;
+        }
+        next.updatedAt = new Date().toISOString();
+        staff[index] = next;
+        writeStaff(staff);
+        sendJson(res, 200, { ok: true, staff: readStaff().map(publicStaff), member: publicStaff(next) });
+      } catch (error) {
+        sendJson(res, 400, { ok: false, error: error.message || "به‌روزرسانی کارشناس انجام نشد." });
+      }
+      return;
+    }
 
     if (req.method === "GET" && url.pathname === "/api/admin/requests") {
       sendJson(res, 200, { ok: true, requests: readRequests() });
