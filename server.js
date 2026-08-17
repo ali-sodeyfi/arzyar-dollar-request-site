@@ -30,6 +30,11 @@ const SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER = process.env.SMSIR_CUSTOMER_VERIFY_C
 const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
 const SMS_WEBHOOK_TOKEN = process.env.SMS_WEBHOOK_TOKEN || "";
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || "";
+const GOOGLE_ADS_CONVERSION_ID = normalizeGoogleAdsConversionId(
+  process.env.GOOGLE_ADS_CONVERSION_ID || process.env.GOOGLE_ADS_ID || ""
+);
+const GOOGLE_ADS_REQUEST_CONVERSION_LABEL = cleanText(process.env.GOOGLE_ADS_REQUEST_CONVERSION_LABEL, 120);
+const GOOGLE_ADS_PAYMENT_CONVERSION_LABEL = cleanText(process.env.GOOGLE_ADS_PAYMENT_CONVERSION_LABEL, 120);
 const PAYMENT_PROVIDER = (process.env.PAYMENT_PROVIDER || "off").toLowerCase();
 const ZARINPAL_MERCHANT_ID = process.env.ZARINPAL_MERCHANT_ID || "";
 const ZARINPAL_SANDBOX = process.env.ZARINPAL_SANDBOX === "true";
@@ -288,6 +293,77 @@ function normalizeUrl(value) {
   } catch {
     return "";
   }
+}
+
+function normalizeGoogleAdsConversionId(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const normalized = raw.toUpperCase().startsWith("AW-") ? raw.toUpperCase() : `AW-${raw}`;
+  return /^AW-\d+$/.test(normalized) ? normalized : "";
+}
+
+function googleAdsScript() {
+  const config = {
+    enabled: Boolean(GOOGLE_ADS_CONVERSION_ID),
+    conversionId: GOOGLE_ADS_CONVERSION_ID,
+    requestConversionLabel: GOOGLE_ADS_REQUEST_CONVERSION_LABEL,
+    paymentConversionLabel: GOOGLE_ADS_PAYMENT_CONVERSION_LABEL
+  };
+  const configJson = JSON.stringify(config);
+  return `
+(function () {
+  var config = ${configJson};
+  window.ARZRAH_GOOGLE_ADS = config;
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ window.dataLayer.push(arguments); }
+  window.gtag = window.gtag || gtag;
+
+  function conversionPayload(label, source) {
+    var estimate = source && source.estimate ? source.estimate : {};
+    var value = Number(estimate.totalAmount || source.value || 0);
+    var currency = String(estimate.currency || source.currency || "USD").toUpperCase();
+    var payload = {
+      send_to: config.conversionId + "/" + label,
+      transaction_id: String(source.id || source.requestId || "")
+    };
+    if (Number.isFinite(value) && value > 0) payload.value = value;
+    if (/^[A-Z]{3}$/.test(currency)) payload.currency = currency;
+    return payload;
+  }
+
+  window.arzrahTrackRequestSubmit = function (request) {
+    request = request || {};
+    window.dataLayer.push({
+      event: "arzrah_request_submitted",
+      request_id: String(request.id || ""),
+      value: Number(request.estimate && request.estimate.totalAmount || 0),
+      currency: String(request.estimate && request.estimate.currency || "USD")
+    });
+    if (!config.enabled || !config.requestConversionLabel) return;
+    window.gtag("event", "conversion", conversionPayload(config.requestConversionLabel, request));
+  };
+
+  window.arzrahTrackPaymentPaid = function (payment) {
+    payment = payment || {};
+    window.dataLayer.push({
+      event: "arzrah_payment_paid",
+      request_id: String(payment.id || payment.requestId || ""),
+      value: Number(payment.value || 0),
+      currency: String(payment.currency || "")
+    });
+    if (!config.enabled || !config.paymentConversionLabel) return;
+    window.gtag("event", "conversion", conversionPayload(config.paymentConversionLabel, payment));
+  };
+
+  if (!config.enabled) return;
+  var script = document.createElement("script");
+  script.async = true;
+  script.src = "https://www.googletagmanager.com/gtag/js?id=" + encodeURIComponent(config.conversionId);
+  document.head.appendChild(script);
+  window.gtag("js", new Date());
+  window.gtag("config", config.conversionId);
+})();
+`.trimStart();
 }
 
 function requestOrigin(req) {
@@ -1333,6 +1409,10 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   if (url.pathname.startsWith("/api/")) {
     await handleApi(req, res, url);
+    return;
+  }
+  if (req.method === "GET" && url.pathname === "/google-ads.js") {
+    sendText(res, 200, googleAdsScript(), "text/javascript; charset=utf-8");
     return;
   }
   serveStatic(req, res, url);

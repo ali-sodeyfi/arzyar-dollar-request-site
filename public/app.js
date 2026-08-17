@@ -286,6 +286,7 @@
         ? ` با نرخ ${toman.format(request.estimate.rateToman)} تومان`
         : "";
       setMessage(`درخواست شما با کد ${request.id} ثبت شد. برآورد اولیه${rateText}: ${toman.format(request.estimate.estimatedToman)} تومان. قیمت نهایی بعد از بررسی پیامک می‌شود.`, "success");
+      window.arzrahTrackRequestSubmit?.(request);
       form.reset();
       resetPhoneVerification();
       setPhoneVerifyMessage("", "");
