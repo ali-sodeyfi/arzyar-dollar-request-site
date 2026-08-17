@@ -220,7 +220,7 @@
   function updateSubmitAvailability() {
     if (!submitButton) return;
     submitButton.disabled = submitting;
-    submitButton.textContent = submitting ? "در حال ثبت..." : "ثبت درخواست";
+    submitButton.textContent = submitting ? "در حال ثبت..." : "ثبت درخواست و دریافت کد رهگیری";
   }
 
   function resetPhoneVerification(text = "") {
@@ -376,7 +376,7 @@
         if (!response.ok || !payload.ok) throw new Error(payload.error || "تایید شماره انجام نشد.");
         verifiedPhone = phone;
         form.elements.phoneVerificationToken.value = payload.phoneVerificationToken;
-        setPhoneVerifyMessage("شماره موبایل تایید شد. حالا می‌توانید درخواست را ثبت کنید.", "success");
+        setPhoneVerifyMessage("شماره موبایل تایید شد.", "success");
         updateSubmitAvailability();
       } catch (error) {
         resetPhoneVerification(error.message || "تایید شماره انجام نشد.");

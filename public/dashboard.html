@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>داشبورد ارزراه | مدیریت درخواست‌ها</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <meta name="theme-color" content="#087b75">
-    <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=20260815-rate-detail">
+    <meta name="theme-color" content="#0f766e">
+    <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="styles.css?v=20260817-ux-redesign">
   </head>
   <body class="dashboard-body">
     <header class="site-header dashboard-header">
@@ -15,7 +15,7 @@
         <span class="brand-mark" aria-hidden="true"><img src="logo-mark.svg" alt=""></span>
         <span>
           <strong>داشبورد ارزراه</strong>
-          <small>مدیریت درخواست‌های خرید دلاری</small>
+          <small>صف عملیات و قیمت‌گذاری</small>
         </span>
       </a>
       <nav class="top-nav" aria-label="ناوبری داشبورد">
@@ -28,9 +28,9 @@
     <main class="dashboard-shell">
       <section class="login-panel tool-panel" id="loginPanel" aria-labelledby="loginTitle">
         <div>
-          <p class="eyebrow">ورود مدیر</p>
-          <h1 id="loginTitle">ورود با کد پیامکی</h1>
-          <p>هر بار ورود، یک کد یک‌بارمصرف به شماره ادمین ارسال می‌شود.</p>
+          <p class="eyebrow">ورود امن مدیر</p>
+          <h1 id="loginTitle">کد ورود پیامکی</h1>
+          <p>برای ورود به صف درخواست‌ها، کد یک‌بارمصرف به شماره ادمین ارسال می‌شود.</p>
         </div>
         <form id="loginForm" class="login-form">
           <label>
@@ -48,11 +48,11 @@
       <section class="dashboard-app is-hidden" id="dashboardApp" aria-labelledby="dashboardTitle">
         <div class="dashboard-title-row">
           <div>
-            <p class="eyebrow">نمای عملیاتی</p>
-            <h1 id="dashboardTitle">درخواست‌های ثبت‌شده</h1>
+            <p class="eyebrow">صف عملیات</p>
+            <h1 id="dashboardTitle">درخواست‌ها و قیمت‌گذاری</h1>
           </div>
           <div class="dashboard-actions">
-            <button class="secondary-button" id="refreshButton" type="button">به‌روزرسانی</button>
+            <button class="secondary-button" id="refreshButton" type="button">تازه‌سازی</button>
             <a class="primary-button" id="exportLink" href="#">خروجی CSV</a>
           </div>
         </div>
@@ -189,6 +189,6 @@
       </section>
     </main>
 
-    <script src="dashboard.js?v=20260815-rate-detail" defer></script>
+    <script src="dashboard.js?v=20260817-ux-redesign" defer></script>
   </body>
 </html>
