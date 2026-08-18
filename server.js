@@ -29,7 +29,7 @@ const KAVENEGAR_SENDER = process.env.KAVENEGAR_SENDER || process.env.SMS_SENDER 
 const SMSIR_API_KEY = process.env.SMSIR_API_KEY || "";
 const SMSIR_LINE_NUMBER = process.env.SMSIR_LINE_NUMBER || process.env.SMSIR_SENDER || process.env.SMS_SENDER || "";
 const SMSIR_VERIFY_TEMPLATE_ID = process.env.SMSIR_VERIFY_TEMPLATE_ID || "";
-const SMSIR_VERIFY_CODE_PARAMETER = process.env.SMSIR_VERIFY_CODE_PARAMETER || "Code";
+const SMSIR_VERIFY_CODE_PARAMETER = process.env.SMSIR_VERIFY_CODE_PARAMETER || "CODE";
 const SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID = process.env.SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID || SMSIR_VERIFY_TEMPLATE_ID;
 const SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER = process.env.SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER || SMSIR_VERIFY_CODE_PARAMETER;
 const SMS_WEBHOOK_URL = process.env.SMS_WEBHOOK_URL || "";
@@ -86,6 +86,8 @@ const serviceTypes = new Set([
   "university",
   "software",
   "shop_order",
+  "claude_topup",
+  "chatgpt_topup",
   "other"
 ]);
 
@@ -129,7 +131,20 @@ const serviceLabels = {
   university: "دانشگاه/اپلای",
   software: "نرم‌افزار",
   shop_order: "خرید کالا",
+  claude_topup: "شارژ Claude",
+  chatgpt_topup: "شارژ ChatGPT",
   other: "سایر"
+};
+
+const serviceFeeProfiles = {
+  claude_topup: {
+    label: "شارژ Claude",
+    percent: 0.03
+  },
+  chatgpt_topup: {
+    label: "شارژ ChatGPT",
+    percent: 0.015
+  }
 };
 
 const contentTypes = {
@@ -294,6 +309,27 @@ function coerceSmsIrLineNumber(value) {
 function extractSmsCode(message) {
   const match = String(message || "").match(/\b(\d{4,8})\b/);
   return match ? match[1] : "";
+}
+
+function tieredServiceFeePercent(amount) {
+  return amount <= 100 ? 0.055 : amount <= 500 ? 0.045 : amount <= 2000 ? 0.035 : 0.028;
+}
+
+function resolveServiceFeeProfile(serviceType, amount) {
+  const profile = serviceFeeProfiles[String(serviceType || "").trim()];
+  if (profile) {
+    return {
+      label: profile.label,
+      percent: profile.percent,
+      source: "service"
+    };
+  }
+
+  return {
+    label: "کارمزد پلکانی",
+    percent: tieredServiceFeePercent(amount),
+    source: "tiered"
+  };
 }
 
 function smsLogMessage(message, reason) {
@@ -949,17 +985,13 @@ async function verifyPayment(payment) {
   };
 }
 
-async function estimateCost(amount, urgent, currency) {
+async function estimateCost(amount, urgent, currency, serviceType) {
   const numericAmount = Number(amount);
   const normalizedCurrency = currencies.has(String(currency || "").toUpperCase()) ? String(currency).toUpperCase() : "USD";
   const ratePayload = await getExchangeRates();
   const rateToman = normalizeRate(ratePayload.rates?.[normalizedCurrency]?.sellToman) || SAMPLE_USD_TOMAN;
-  const percent =
-    numericAmount <= 100 ? 0.055 :
-    numericAmount <= 500 ? 0.045 :
-    numericAmount <= 2000 ? 0.035 :
-    0.028;
-  const serviceFee = Math.max(2, Math.round(numericAmount * percent * 100) / 100);
+  const serviceFeeProfile = resolveServiceFeeProfile(serviceType, numericAmount);
+  const serviceFee = Math.max(2, Math.round(numericAmount * serviceFeeProfile.percent * 100) / 100);
   const urgentFee = urgent ? Math.max(5, Math.round(numericAmount * 0.015 * 100) / 100) : 0;
   const totalAmount = Math.round((numericAmount + serviceFee + urgentFee) * 100) / 100;
   return {
@@ -971,6 +1003,9 @@ async function estimateCost(amount, urgent, currency) {
     rateFetchedAt: ratePayload.fetchedAt,
     rateFallback: Boolean(ratePayload.fallback || ratePayload.stale),
     serviceFee,
+    serviceFeeRate: serviceFeeProfile.percent,
+    serviceFeeLabel: serviceFeeProfile.label,
+    serviceFeeSource: serviceFeeProfile.source,
     urgentFee,
     totalAmount,
     serviceFeeUsd: normalizedCurrency === "USD" ? serviceFee : undefined,
@@ -1101,77 +1136,116 @@ async function sendSms(receptor, message, reason = "notification") {
     const isCustomerOtp = reason === "customer_phone_otp";
     const verifyTemplateId = isCustomerOtp ? SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID : SMSIR_VERIFY_TEMPLATE_ID;
     const verifyCodeParameter = isCustomerOtp ? SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER : SMSIR_VERIFY_CODE_PARAMETER;
-    const useVerifyTemplate = (isAdminOtp || isCustomerOtp) && verifyTemplateId;
-    const endpoint = useVerifyTemplate
-      ? "https://api.sms.ir/v1/send/verify"
-      : "https://api.sms.ir/v1/send/bulk";
-    let body;
+    const shouldTryVerify = (isAdminOtp || isCustomerOtp) && verifyTemplateId;
+    const attemptModes = shouldTryVerify ? ["verify", "bulk"] : ["bulk"];
+    let fellBackFromVerify = false;
 
-    if (useVerifyTemplate) {
-      const templateId = Number(verifyTemplateId);
-      const code = extractSmsCode(message);
-      if (!Number.isSafeInteger(templateId) || templateId <= 0) {
-        throw new Error("شناسه قالب Verify پیامک معتبر نیست.");
+    const sendSmsIrRequest = async (mode) => {
+      const useVerifyTemplate = mode === "verify";
+      let body;
+
+      if (useVerifyTemplate) {
+        const templateId = Number(verifyTemplateId);
+        const code = extractSmsCode(message);
+        if (!Number.isSafeInteger(templateId) || templateId <= 0) {
+          throw new Error("شناسه قالب Verify پیامک معتبر نیست.");
+        }
+        if (!code) throw new Error("کد پیامکی برای قالب Verify پیدا نشد.");
+
+        body = {
+          mobile: phone,
+          templateId,
+          parameters: [
+            {
+              name: verifyCodeParameter,
+              value: code
+            }
+          ]
+        };
+      } else {
+        const lineNumber = coerceSmsIrLineNumber(SMSIR_LINE_NUMBER);
+        if (!lineNumber) throw new Error("SMSIR_LINE_NUMBER تنظیم نشده است.");
+        body = {
+          lineNumber,
+          messageText: message,
+          mobiles: [phone]
+        };
       }
-      if (!code) throw new Error("کد پیامکی برای قالب Verify پیدا نشد.");
 
-      body = {
-        mobile: phone,
-        templateId,
-        parameters: [
-          {
-            name: verifyCodeParameter,
-            value: code
-          }
-        ]
+      const response = await fetch(useVerifyTemplate ? "https://api.sms.ir/v1/send/verify" : "https://api.sms.ir/v1/send/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "X-API-KEY": SMSIR_API_KEY
+        },
+        body: JSON.stringify(body)
+      });
+      const text = await response.text();
+      let payload = null;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = null;
+      }
+      const hasApiStatus = payload && Object.prototype.hasOwnProperty.call(payload, "status");
+      const apiStatus = hasApiStatus ? Number(payload.status) : null;
+      return {
+        response,
+        text,
+        payload,
+        apiStatus,
+        endpoint: mode
       };
-    } else {
-      const lineNumber = coerceSmsIrLineNumber(SMSIR_LINE_NUMBER);
-      if (!lineNumber) throw new Error("SMSIR_LINE_NUMBER تنظیم نشده است.");
-      body = {
-        lineNumber,
-        messageText: message,
-        mobiles: [phone]
-      };
-    }
+    };
 
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        "X-API-KEY": SMSIR_API_KEY
-      },
-      body: JSON.stringify(body)
-    });
-    const text = await response.text();
-    let payload = null;
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = null;
-    }
-    const hasApiStatus = payload && Object.prototype.hasOwnProperty.call(payload, "status");
-    const apiStatus = hasApiStatus ? Number(payload.status) : null;
-    if (!response.ok || (hasApiStatus && apiStatus !== 1)) {
+    for (const mode of attemptModes) {
+      let result;
+      try {
+        result = await sendSmsIrRequest(mode);
+      } catch (error) {
+        appendSmsLog({
+          ...baseLog,
+          ok: false,
+          endpoint: mode,
+          response: (error.message || "ارسال پیامک SMS.ir ناموفق بود.").slice(0, 500),
+          ...(mode === "verify" ? { fallback: "bulk" } : {})
+        });
+        if (mode === "verify") {
+          fellBackFromVerify = true;
+          continue;
+        }
+        throw new Error("ارسال پیامک SMS.ir ناموفق بود.");
+      }
+
+      if (!result.response.ok || (result.payload && Object.prototype.hasOwnProperty.call(result.payload, "status") && Number(result.payload.status) !== 1)) {
+        appendSmsLog({
+          ...baseLog,
+          ok: false,
+          status: result.response.status,
+          apiStatus: result.apiStatus,
+          endpoint: mode,
+          response: result.text.slice(0, 500),
+          ...(mode === "verify" ? { fallback: "bulk" } : {})
+        });
+        if (mode === "verify") {
+          fellBackFromVerify = true;
+          continue;
+        }
+        throw new Error("ارسال پیامک SMS.ir ناموفق بود.");
+      }
+
       appendSmsLog({
         ...baseLog,
-        ok: false,
-        status: response.status,
-        apiStatus,
-        response: text.slice(0, 500)
+        ok: true,
+        status: result.response.status,
+        apiStatus: result.apiStatus,
+        endpoint: mode,
+        data: summarizeSmsIrData(result.payload?.data),
+        ...(fellBackFromVerify ? { fallbackFrom: "verify" } : {})
       });
-      throw new Error("ارسال پیامک SMS.ir ناموفق بود.");
+      return { ok: true, provider: "smsir", endpoint: mode, ...(fellBackFromVerify ? { fallbackFrom: "verify" } : {}) };
     }
-    appendSmsLog({
-      ...baseLog,
-      ok: true,
-      status: response.status,
-      apiStatus,
-      endpoint: useVerifyTemplate ? "verify" : "bulk",
-      data: summarizeSmsIrData(payload?.data)
-    });
-    return { ok: true, provider: "smsir", endpoint: useVerifyTemplate ? "verify" : "bulk" };
   }
 
   if (SMS_PROVIDER === "kavenegar") {
@@ -1442,7 +1516,7 @@ async function handleApi(req, res, url) {
         deadline,
         urgent,
         status: "new",
-        estimate: await estimateCost(amount, urgent, currency),
+        estimate: await estimateCost(amount, urgent, currency, serviceType),
         payments: [],
         assignedTo: "",
         internalNote: "",

@@ -51,9 +51,9 @@ $env:PUBLIC_BASE_URL="https://your-domain.example"
 
 ```powershell
 $env:SMSIR_VERIFY_TEMPLATE_ID="YOUR_VERIFY_TEMPLATE_ID"
-$env:SMSIR_VERIFY_CODE_PARAMETER="Code"
+$env:SMSIR_VERIFY_CODE_PARAMETER="CODE"
 $env:SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID="YOUR_CUSTOMER_VERIFY_TEMPLATE_ID"
-$env:SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER="Code"
+$env:SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER="CODE"
 ```
 
 نمونه متن قالب Verify:
@@ -62,7 +62,7 @@ $env:SMSIR_CUSTOMER_VERIFY_CODE_PARAMETER="Code"
 کد تایید ارزراه: #CODE#
 ```
 
-برای تایید موبایل مشتری هم قبل از ثبت درخواست، کد پیامکی ارسال می‌شود. در حالت production بهتر است `SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID` را روی یک قالب خدماتی/Verify تاییدشده بگذارید تا برای شماره‌هایی که پیامک تبلیغاتی را بسته‌اند قابل دریافت باشد. اگر این env خالی باشد، سرور از `SMSIR_VERIFY_TEMPLATE_ID` استفاده می‌کند و اگر آن هم خالی باشد پیام عادی bulk می‌فرستد.
+برای تایید موبایل مشتری هم قبل از ثبت درخواست، کد پیامکی ارسال می‌شود. در حالت production بهتر است `SMSIR_CUSTOMER_VERIFY_TEMPLATE_ID` را روی یک قالب خدماتی/Verify تاییدشده بگذارید تا برای شماره‌هایی که پیامک تبلیغاتی را بسته‌اند قابل دریافت باشد. اگر این env خالی باشد، سرور از `SMSIR_VERIFY_TEMPLATE_ID` استفاده می‌کند و اگر آن هم خالی باشد پیام عادی bulk می‌فرستد. اگر قالب Verify هنوز تایید نشده باشد، سرور به‌صورت خودکار به bulk برمی‌گردد تا جریان سایت نخوابد.
 
 ## پیامک واقعی با کاوه‌نگار
 

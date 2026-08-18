@@ -47,6 +47,8 @@
     university: "دانشگاه/اپلای",
     software: "نرم‌افزار",
     shop_order: "خرید کالا",
+    claude_topup: "شارژ Claude",
+    chatgpt_topup: "شارژ ChatGPT",
     other: "سایر"
   };
 
@@ -156,6 +158,11 @@
     loginMessage.dataset.tone = tone || "";
   }
 
+  function dashboardReturnTo() {
+    const hash = window.location.hash && window.location.hash !== "#" ? window.location.hash : "";
+    return `/dashboard${hash}`;
+  }
+
   function setGoogleLoginNote(text, tone) {
     googleLoginNote.textContent = text || "";
     googleLoginNote.dataset.tone = tone || "";
@@ -240,6 +247,16 @@
 
   function toman(value) {
     return `${formatter.format(Math.round(Number(value || 0)))} تومان`;
+  }
+
+  function serviceFeeText(item) {
+    const estimate = item.estimate || {};
+    const fee = Number(estimate.serviceFee);
+    if (!Number.isFinite(fee) || fee <= 0) return "-";
+    const currency = estimate.currency || item.currency || "USD";
+    const labelParts = [estimate.serviceFeeLabel, estimate.serviceFeeRateText].filter(Boolean);
+    const label = labelParts.length ? ` (${labelParts.join("، ")})` : "";
+    return `${formatter.format(fee)} ${currency}${label}`;
   }
 
   function matchesFilter(item) {
@@ -351,6 +368,7 @@
     document.querySelector("#detailRate").textContent = item.estimate?.rateToman
       ? `${formatter.format(item.estimate.rateToman)} تومان (${item.estimate.rateSource || "نرخ"})`
       : "-";
+    document.querySelector("#detailServiceFee").textContent = serviceFeeText(item);
     document.querySelector("#detailFinalPrice").textContent = item.finalPriceToman ? toman(item.finalPriceToman) : "-";
     document.querySelector("#detailUrgent").textContent = item.urgent ? "فوری" : "عادی";
     const link = document.querySelector("#detailUrl");
@@ -491,7 +509,7 @@
       const enabled = Boolean(payload.googleEnabled);
       googleLoginButton.classList.toggle("is-disabled", !enabled);
       googleLoginButton.setAttribute("aria-disabled", enabled ? "false" : "true");
-      googleLoginButton.href = enabled ? "/api/admin/google/start?returnTo=/dashboard" : "#";
+      googleLoginButton.href = enabled ? `/api/admin/google/start?returnTo=${encodeURIComponent(dashboardReturnTo())}` : "#";
       setGoogleLoginNote(enabled ? "" : "ورود گوگل بعد از تنظیم OAuth روی سرور فعال می‌شود.", enabled ? "" : "error");
     } catch {
       googleLoginButton.classList.add("is-disabled");
@@ -569,6 +587,9 @@
     await loadMe();
     await loadStaff();
     await loadRequests();
+    if (window.location.hash === "#staffPanel" && staffPanel && !staffPanel.classList.contains("is-hidden")) {
+      window.setTimeout(() => staffPanel.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+    }
   }
 
   async function loadRequests() {
