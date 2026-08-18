@@ -3,12 +3,12 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>ارزراه | ثبت درخواست خرید دلاری</title>
-    <meta name="description" content="ثبت درخواست پرداخت ارزی، خرید اشتراک، گیفت کارت و پرداخت‌های بین‌المللی با داشبورد پیگیری.">
+    <title>ارزراه | خرید دلاری و پرداخت ارزی با قیمت نهایی قبل از پرداخت</title>
+    <meta name="description" content="ثبت درخواست خرید دلاری، پرداخت سایت خارجی، اشتراک، اپلیکیشن‌فی و پی‌پال با تایید موبایل، برآورد بر اساس نرخ بن‌بست و اعلام قیمت نهایی قبل از پرداخت.">
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <meta name="theme-color" content="#087b75">
-    <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=20260815-rate-detail">
+    <meta name="theme-color" content="#0f766e">
+    <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="styles.css?v=20260817-ux-redesign">
   </head>
   <body>
     <header class="site-header" data-elevated="false">
@@ -16,143 +16,171 @@
         <span class="brand-mark" aria-hidden="true"><img src="logo-mark.svg" alt=""></span>
         <span>
           <strong>ارزراه</strong>
-          <small>مسیر پرداخت ارزی و خرید دلاری</small>
+          <small>درخواست و پیگیری پرداخت ارزی</small>
         </span>
       </a>
       <nav class="top-nav" aria-label="ناوبری اصلی">
         <a href="#request">ثبت درخواست</a>
-        <a href="#services">خدمات</a>
+        <a href="#fees">قیمت‌گذاری</a>
         <a href="#process">فرآیند</a>
-        <a href="benchmark.html">بنچ‌مارک</a>
+        <a href="#services">خدمات</a>
+        <a href="#faq">سوالات</a>
       </nav>
-      <a class="ghost-link" href="dashboard.html">داشبورد</a>
+      <div class="header-actions">
+        <a class="secondary-button" href="dashboard.html#staffPanel">همکاران</a>
+        <a class="ghost-link" href="dashboard.html">داشبورد</a>
+      </div>
     </header>
 
     <main>
       <section class="hero-shell" aria-labelledby="hero-title">
-        <img class="hero-image" src="assets/hero-payments.png" alt="میز کار مدرن برای بررسی درخواست‌های پرداخت ارزی">
+        <img class="hero-image" src="assets/hero-payments.png" alt="نمای پرداخت ارزی و بررسی سفارش">
         <div class="hero-overlay"></div>
         <div class="hero-content">
           <div class="hero-copy">
-            <p class="eyebrow">ثبت و پیگیری خرید دلاری</p>
-            <h1 id="hero-title">خرید دلاری و پرداخت ارزی بدون دردسر</h1>
-            <p class="hero-lede">لینک خرید، مبلغ و توضیحات را ثبت کنید؛ ارزراه درخواست را با کد رهگیری، پیامک وضعیت و داشبورد پیگیری جلو می‌برد.</p>
+            <p class="eyebrow">ارزراه برای پرداخت‌های دلاری</p>
+            <h1 id="hero-title">خرید دلاری و پرداخت ارزی، با قیمت نهایی قبل از پرداخت</h1>
+            <p class="hero-lede">لینک پرداخت، مبلغ و توضیح لازم را ثبت کنید. شماره موبایل تایید می‌شود، برآورد اولیه با نرخ مرجع نمایش داده می‌شود و بعد از بررسی، قیمت نهایی و لینک پرداخت برای شما پیامک می‌شود.</p>
             <div class="hero-actions">
-              <a class="primary-button" href="#request">شروع ثبت درخواست</a>
-              <a class="secondary-button" href="#services">دیدن سرویس‌ها</a>
+              <a class="primary-button" href="#request">ثبت درخواست جدید</a>
+              <a class="secondary-button" href="#fees">روش محاسبه قیمت</a>
             </div>
           </div>
-          <dl class="hero-metrics" aria-label="شاخص‌های سرویس">
+          <div class="hero-status" aria-label="خلاصه مسیر">
             <div>
-              <dt>۲۴/۷</dt>
-              <dd>پذیرش درخواست</dd>
+              <span>۱</span>
+              <strong>تایید موبایل</strong>
+              <small>برای ارسال وضعیت و لینک پرداخت</small>
             </div>
             <div>
-              <dt>۱ ساعت</dt>
-              <dd>بررسی فوری</dd>
+              <span>۲</span>
+              <strong>برآورد اولیه</strong>
+              <small>بر پایه نرخ مرجع و کارمزد شفاف</small>
             </div>
             <div>
-              <dt>۷ ارز</dt>
-              <dd>پشتیبانی اولیه</dd>
+              <span>۳</span>
+              <strong>قیمت نهایی</strong>
+              <small>اعلام توسط اپراتور قبل از پرداخت</small>
             </div>
-          </dl>
+          </div>
         </div>
       </section>
 
       <section class="request-band" id="request" aria-labelledby="request-title">
-        <div class="section-head">
-          <p class="eyebrow">فرم عملیاتی</p>
-          <h2 id="request-title">ثبت درخواست خرید دلاری</h2>
-          <p>برای امنیت، رمز عبور یا اطلاعات محرمانه را در این فرم وارد نکنید. تیم پشتیبانی در صورت نیاز از مسیر امن پیگیری می‌کند.</p>
+        <div class="section-head request-head">
+          <div>
+            <p class="eyebrow">شروع درخواست</p>
+            <h2 id="request-title">فرم خرید دلاری</h2>
+            <p>فقط اطلاعات غیرمحرمانه را وارد کنید. رمز حساب، کد امنیتی کارت یا اطلاعات حساس را داخل فرم ننویسید.</p>
+          </div>
+          <div class="rate-note">
+            <span>مبنای برآورد</span>
+            <strong>نرخ بن‌بست + کارمزد</strong>
+          </div>
         </div>
 
         <div class="request-layout">
           <form class="request-form tool-panel" id="requestForm" novalidate>
-            <div class="form-grid">
-              <label>
-                <span>نام و نام خانوادگی</span>
-                <input name="fullName" autocomplete="name" required placeholder="مثلا سارا محمدی">
-              </label>
-              <div class="phone-field-group">
-                <label>
-                  <span>موبایل</span>
-                  <input name="phone" inputmode="tel" autocomplete="tel" required placeholder="0912...">
-                </label>
-                <div class="phone-verify-panel">
-                  <input name="phoneVerificationToken" type="hidden">
-                  <div class="phone-verify-actions">
-                    <button class="secondary-button" id="sendPhoneCodeButton" type="button">ارسال کد تایید</button>
-                    <input name="phoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="کد تایید">
-                    <button class="primary-button" id="verifyPhoneCodeButton" type="button">تایید شماره</button>
-                  </div>
-                  <p class="form-message phone-verify-message" id="phoneVerifyMessage" role="status"></p>
-                </div>
-              </div>
-              <label>
-                <span>ایمیل</span>
-                <input name="email" type="email" autocomplete="email" placeholder="you@example.com">
-              </label>
-              <label>
-                <span>نوع سرویس</span>
-                <select name="serviceType" required>
-                  <option value="international_payment">پرداخت در سایت خارجی</option>
-                  <option value="subscription">خرید یا تمدید اشتراک</option>
-                  <option value="gift_card">خرید گیفت کارت</option>
-                  <option value="exam_fee">هزینه آزمون بین‌المللی</option>
-                  <option value="university">پرداخت دانشگاه/اپلای</option>
-                  <option value="software">خرید نرم‌افزار یا لایسنس</option>
-                  <option value="shop_order">خرید کالا از سایت خارجی</option>
-                  <option value="other">سایر موارد</option>
-                </select>
-              </label>
-              <label class="span-2">
-                <span>لینک پرداخت یا سایت مقصد</span>
-                <input name="targetUrl" inputmode="url" required placeholder="https://example.com/checkout">
-              </label>
-              <label>
-                <span>مبلغ</span>
-                <input name="amount" type="number" min="1" step="0.01" required placeholder="20">
-              </label>
-              <label>
-                <span>ارز</span>
-                <select name="currency" required>
-                  <option value="USD">دلار آمریکا USD</option>
-                  <option value="EUR">یورو EUR</option>
-                  <option value="GBP">پوند GBP</option>
-                  <option value="CAD">دلار کانادا CAD</option>
-                  <option value="AUD">دلار استرالیا AUD</option>
-                  <option value="AED">درهم AED</option>
-                  <option value="TRY">لیر TRY</option>
-                </select>
-              </label>
-              <label>
-                <span>روش پرداخت مقصد</span>
-                <select name="paymentMethod">
-                  <option>Visa / Master</option>
-                  <option>PayPal</option>
-                  <option>درگاه مستقیم</option>
-                  <option>Invoice</option>
-                  <option>نامشخص</option>
-                </select>
-              </label>
-              <label>
-                <span>مهلت انجام</span>
-                <input name="deadline" placeholder="مثلا تا امشب">
-              </label>
-              <label class="span-2">
-                <span>شناسه حساب یا توضیح غیرمحرمانه</span>
-                <input name="accountHint" placeholder="مثلا ایمیل اکانت، شماره invoice یا نام پلن؛ رمز وارد نکنید">
-              </label>
-              <label class="span-2">
-                <span>توضیحات</span>
-                <textarea name="description" rows="4" placeholder="جزئیاتی که برای بررسی پرداخت لازم است..."></textarea>
-              </label>
+            <div class="form-progress" aria-label="مراحل فرم">
+              <span>تماس</span>
+              <span>پرداخت</span>
+              <span>ثبت</span>
             </div>
+
+            <fieldset class="form-section">
+              <legend>مشخصات و تایید موبایل</legend>
+              <div class="form-grid">
+                <label>
+                  <span>نام و نام خانوادگی</span>
+                  <input name="fullName" autocomplete="name" required placeholder="مثلا سارا محمدی">
+                </label>
+                <div class="phone-field-group">
+                  <label>
+                    <span>موبایل</span>
+                    <input name="phone" inputmode="tel" autocomplete="tel" required placeholder="09123456789">
+                  </label>
+                  <div class="phone-verify-panel">
+                    <input name="phoneVerificationToken" type="hidden">
+                    <div class="phone-verify-actions">
+                      <button class="secondary-button" id="sendPhoneCodeButton" type="button">ارسال کد</button>
+                      <input name="phoneCode" inputmode="numeric" autocomplete="one-time-code" placeholder="کد پیامک">
+                      <button class="primary-button" id="verifyPhoneCodeButton" type="button">تایید</button>
+                    </div>
+                    <p class="form-message phone-verify-message" id="phoneVerifyMessage" role="status"></p>
+                  </div>
+                </div>
+                <label class="span-2">
+                  <span>ایمیل، اختیاری</span>
+                  <input name="email" type="email" autocomplete="email" placeholder="you@example.com">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>جزئیات پرداخت</legend>
+              <div class="form-grid">
+                <label>
+                  <span>نوع سرویس</span>
+                  <select name="serviceType" required>
+                    <option value="international_payment">پرداخت در سایت خارجی</option>
+                    <option value="subscription">خرید یا تمدید اشتراک</option>
+                    <option value="gift_card">خرید گیفت کارت</option>
+                    <option value="exam_fee">هزینه آزمون بین‌المللی</option>
+                    <option value="university">پرداخت دانشگاه/اپلای</option>
+                    <option value="software">خرید نرم‌افزار یا لایسنس</option>
+                    <optgroup label="شارژ سرویس‌های هوش مصنوعی">
+                      <option value="claude_topup">شارژ Claude</option>
+                      <option value="chatgpt_topup">شارژ ChatGPT</option>
+                    </optgroup>
+                    <option value="shop_order">خرید کالا از سایت خارجی</option>
+                    <option value="other">سایر موارد</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  <span>لینک پرداخت یا سایت مقصد</span>
+                  <input name="targetUrl" inputmode="url" required placeholder="https://example.com/checkout">
+                </label>
+                <label>
+                  <span>مبلغ ارزی</span>
+                  <input name="amount" type="number" min="1" step="0.01" required placeholder="49">
+                </label>
+                <label>
+                  <span>ارز</span>
+                  <select name="currency" required>
+                    <option value="USD">دلار آمریکا USD</option>
+                    <option value="EUR">یورو EUR</option>
+                    <option value="GBP">پوند GBP</option>
+                    <option value="CAD">دلار کانادا CAD</option>
+                    <option value="AUD">دلار استرالیا AUD</option>
+                    <option value="AED">درهم AED</option>
+                    <option value="TRY">لیر TRY</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  <span>مهلت یا زمان مطلوب، اختیاری</span>
+                  <input name="deadline" placeholder="مثلا امروز یا تا آخر هفته">
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>توضیحات بررسی</legend>
+              <div class="form-grid">
+                <label class="span-2">
+                  <span>شناسه حساب یا توضیح غیرمحرمانه</span>
+                  <input name="accountHint" placeholder="مثلا ایمیل اکانت، شماره invoice یا نام پلن؛ رمز وارد نکنید">
+                </label>
+                <label class="span-2">
+                  <span>توضیحات</span>
+                  <textarea name="description" rows="4" placeholder="جزئیاتی که برای بررسی پرداخت لازم است..."></textarea>
+                </label>
+              </div>
+            </fieldset>
 
             <div class="form-options">
               <label class="check-row">
                 <input name="urgent" type="checkbox">
-                <span>عجله دارم و بررسی سریع می‌خواهم</span>
+                <span>درخواست فوری است</span>
               </label>
               <label class="check-row">
                 <input name="userConsent" type="checkbox" required>
@@ -162,14 +190,14 @@
 
             <div class="estimate-box" aria-live="polite">
               <div>
-                <span>برآورد نمونه</span>
+                <span>برآورد اولیه</span>
                 <strong id="estimateText">مبلغ را وارد کنید</strong>
               </div>
-              <small id="estimateHint">نرخ نهایی توسط اپراتور تایید می‌شود.</small>
+              <small id="estimateHint">قیمت نهایی بعد از بررسی اپراتور پیامک می‌شود.</small>
             </div>
 
             <div class="form-actions">
-              <button class="primary-button" type="submit">ثبت درخواست</button>
+              <button class="primary-button submit-button" type="submit">ثبت درخواست و دریافت کد رهگیری</button>
               <button class="icon-button" type="reset" aria-label="پاک کردن فرم" title="پاک کردن فرم">
                 <span aria-hidden="true">↺</span>
               </button>
@@ -178,81 +206,166 @@
           </form>
 
           <aside class="side-panel" aria-label="خلاصه سرویس">
-            <div class="status-card">
-              <span class="status-dot"></span>
-              <strong>جریان پیشنهادی</strong>
-              <p>ثبت درخواست، بررسی کارشناس، اعلام پیش‌فاکتور، پرداخت ریالی، انجام خرید و ارسال رسید.</p>
+            <div class="summary-panel">
+              <span class="summary-kicker">بعد از ثبت چه می‌شود؟</span>
+              <ol>
+                <li>کد رهگیری ساخته می‌شود.</li>
+                <li>اپراتور امکان پرداخت را بررسی می‌کند.</li>
+                <li>قیمت نهایی و لینک پرداخت پیامک می‌شود.</li>
+              </ol>
             </div>
-            <ul class="feature-list">
-              <li>کد رهگیری خودکار برای هر درخواست</li>
-              <li>محاسبه کارمزد نمونه بر اساس مبلغ و فوریت</li>
-              <li>داشبورد مدیریتی با جستجو، فیلتر و خروجی CSV</li>
-              <li>بدون دریافت رمز عبور در فرم عمومی</li>
-            </ul>
+            <div class="mini-rate-card">
+              <strong>شفاف اما قطعی بعد از بررسی</strong>
+              <p>عدد فرم، برآورد اولیه است. قیمت نهایی به سایت مقصد، مبلغ، فوریت و محدودیت‌های همان پرداخت بستگی دارد.</p>
+            </div>
           </aside>
         </div>
       </section>
 
       <section class="services-band" id="services" aria-labelledby="services-title">
         <div class="section-head compact">
-          <p class="eyebrow">سرویس‌ها</p>
-          <h2 id="services-title">دسته‌های اصلی خرید دلاری</h2>
+          <p class="eyebrow">پرداخت‌های رایج</p>
+          <h2 id="services-title">برای چه چیزهایی درخواست ثبت می‌شود؟</h2>
         </div>
         <div class="service-grid">
           <article>
-            <span aria-hidden="true">💳</span>
+            <span aria-hidden="true">Pay</span>
             <h3>پرداخت سایت خارجی</h3>
-            <p>پرداخت با کارت‌های بین‌المللی، پی‌پال یا invoice برای سرویس‌های مجاز.</p>
+            <p>لینک checkout، invoice یا صفحه پرداخت را برای بررسی ارسال کنید.</p>
           </article>
           <article>
-            <span aria-hidden="true">⚙</span>
+            <span aria-hidden="true">SaaS</span>
             <h3>اشتراک و نرم‌افزار</h3>
-            <p>تمدید ابزارهای کاری، هاستینگ، API، طراحی، مارکتینگ و آموزش.</p>
+            <p>تمدید ابزارهای کاری، سرور، API، طراحی، مارکتینگ و آموزش.</p>
           </article>
           <article>
-            <span aria-hidden="true">🎓</span>
-            <h3>آزمون و دانشگاه</h3>
-            <p>ثبت‌نام آزمون، اپلیکیشن‌فی، ارسال مدارک و هزینه‌های دانشجویی.</p>
+            <span aria-hidden="true">Uni</span>
+            <h3>آزمون و اپلای</h3>
+            <p>اپلیکیشن‌فی، آزمون، ارسال مدارک و پرداخت‌های دانشجویی.</p>
           </article>
           <article>
-            <span aria-hidden="true">🎁</span>
+            <span aria-hidden="true">Gift</span>
             <h3>گیفت کارت</h3>
             <p>درخواست خرید گیفت کارت با کشور، مبلغ و مقصد مصرف مشخص.</p>
           </article>
         </div>
       </section>
 
+      <section class="fees-band" id="fees" aria-labelledby="fees-title">
+        <div class="section-head compact">
+          <p class="eyebrow">قیمت‌گذاری</p>
+          <h2 id="fees-title">برآورد اولیه چطور ساخته می‌شود؟</h2>
+          <p>نرخ ارز از بن‌بست خوانده می‌شود و کارمزد پلکانی روی مبلغ ارزی محاسبه می‌شود. قیمت قطعی بعد از بررسی اپراتور اعلام می‌شود.</p>
+          <p class="fee-note">شارژ Claude: ۳٪ کارمزد. شارژ ChatGPT: ۱.۵٪ کارمزد. برای سایر خدمات، کارمزد پلکانی بر اساس مبلغ اعمال می‌شود.</p>
+        </div>
+        <div class="fee-table-wrap">
+          <table class="fee-table">
+            <thead>
+              <tr>
+                <th>مبلغ درخواست</th>
+                <th>کارمزد پایه</th>
+                <th>حداقل کارمزد</th>
+                <th>فوریت</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>تا ۱۰۰ دلار</td>
+                <td>۵.۵٪</td>
+                <td>۲ دلار</td>
+                <td rowspan="4">در صورت انتخاب فوریت: ۱.۵٪ اضافه، حداقل ۵ دلار</td>
+              </tr>
+              <tr>
+                <td>۱۰۱ تا ۵۰۰ دلار</td>
+                <td>۴.۵٪</td>
+                <td>۲ دلار</td>
+              </tr>
+              <tr>
+                <td>۵۰۱ تا ۲۰۰۰ دلار</td>
+                <td>۳.۵٪</td>
+                <td>۲ دلار</td>
+              </tr>
+              <tr>
+                <td>بیشتر از ۲۰۰۰ دلار</td>
+                <td>۲.۸٪</td>
+                <td>۲ دلار</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section class="process-band" id="process" aria-labelledby="process-title">
         <div class="section-head compact">
-          <p class="eyebrow">عملیات</p>
+          <p class="eyebrow">فرآیند</p>
           <h2 id="process-title">از درخواست تا رسید</h2>
         </div>
         <ol class="process-list">
           <li>
-            <strong>۱. ثبت دقیق اطلاعات</strong>
+            <strong>ثبت اطلاعات</strong>
             <span>مبلغ، ارز، لینک و توضیحات غیرمحرمانه وارد می‌شود.</span>
           </li>
           <li>
-            <strong>۲. بررسی کارشناس</strong>
-            <span>قابلیت پرداخت، کارمزد، فوریت و ریسک بررسی می‌شود.</span>
+            <strong>بررسی اپراتور</strong>
+            <span>امکان پرداخت، کارمزد، فوریت و محدودیت‌ها بررسی می‌شود.</span>
           </li>
           <li>
-            <strong>۳. اعلام پیش‌فاکتور</strong>
-            <span>نرخ نهایی و مبلغ ریالی برای تایید مشتری ارسال می‌شود.</span>
+            <strong>اعلام قیمت نهایی</strong>
+            <span>مبلغ ریالی و لینک پرداخت برای شماره تاییدشده ارسال می‌شود.</span>
           </li>
           <li>
-            <strong>۴. انجام خرید</strong>
-            <span>پس از تسویه، پرداخت انجام و رسید در پرونده درخواست ثبت می‌شود.</span>
+            <strong>انجام پرداخت ارزی</strong>
+            <span>پس از تسویه و تایید شرایط، پرداخت انجام و رسید پیگیری می‌شود.</span>
           </li>
         </ol>
+      </section>
+
+      <section class="landing-pages-band" aria-labelledby="landing-pages-title">
+        <div class="section-head compact">
+          <p class="eyebrow">راهنمای سریع</p>
+          <h2 id="landing-pages-title">سناریوهای پرتکرار</h2>
+        </div>
+        <div class="landing-links">
+          <a href="foreign-payment.html">پرداخت سایت خارجی</a>
+          <a href="application-fee.html">اپلیکیشن‌فی و دانشگاه</a>
+          <a href="subscription.html">اشتراک خارجی</a>
+          <a href="paypal-payment.html">پرداخت پی‌پال</a>
+          <a href="server-payment.html">سرور و ابزار خارجی</a>
+        </div>
+      </section>
+
+      <section class="faq-band" id="faq" aria-labelledby="faq-title">
+        <div class="section-head compact">
+          <p class="eyebrow">سوالات پرتکرار</p>
+          <h2 id="faq-title">قبل از ثبت درخواست</h2>
+        </div>
+        <div class="faq-list">
+          <details>
+            <summary>قیمت فرم قطعی است؟</summary>
+            <p>خیر. فرم برآورد اولیه را نشان می‌دهد. قیمت نهایی بعد از بررسی اپراتور پیامک می‌شود.</p>
+          </details>
+          <details>
+            <summary>رمز اکانت مقصد را باید وارد کنم؟</summary>
+            <p>در فرم عمومی نه. فقط لینک، مبلغ، ارز و توضیح غیرمحرمانه را ثبت کنید.</p>
+          </details>
+          <details>
+            <summary>اگر پرداخت قابل انجام نباشد چه می‌شود؟</summary>
+            <p>اپراتور وضعیت را اعلام می‌کند و تا قبل از پرداخت ریالی، هزینه‌ای از مشتری دریافت نمی‌شود.</p>
+          </details>
+          <details>
+            <summary>چرا شماره موبایل تایید می‌شود؟</summary>
+            <p>برای اینکه قیمت نهایی، تغییر وضعیت و لینک پرداخت به شماره درست ارسال شود.</p>
+          </details>
+        </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <span>ارزراه، نمونه اولیه مستقل برای ثبت و مدیریت درخواست خرید دلاری.</span>
+      <span>ارزراه، ثبت و پیگیری درخواست خرید دلاری با اعلام قیمت قبل از پرداخت.</span>
       <a href="dashboard.html">ورود به داشبورد</a>
     </footer>
 
-    <script src="app.js?v=20260815-rate-detail" defer></script>
+    <script src="google-ads.js?v=20260817-ads" defer></script>
+    <script src="app.js?v=20260817-ux-redesign" defer></script>
   </body>
 </html>

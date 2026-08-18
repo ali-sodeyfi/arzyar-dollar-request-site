@@ -16,6 +16,16 @@
   const fallbackRates = {
     USD: { sellToman: fallbackRate, source: "fallback" }
   };
+  const serviceFeeProfiles = {
+    claude_topup: {
+      label: "شارژ Claude",
+      percent: 0.03
+    },
+    chatgpt_topup: {
+      label: "شارژ ChatGPT",
+      percent: 0.015
+    }
+  };
   let phoneCodeCooldownTimer = null;
   let phoneCodeSending = false;
   let phoneCodeVerifying = false;
@@ -32,21 +42,46 @@
     return Number(rateState.rates?.[normalizedCurrency]?.sellToman || fallbackRates.USD.sellToman);
   }
 
-  function estimate(amount, urgent, currency) {
+  function tieredServiceFeePercent(amount) {
+    return amount <= 100 ? 0.055 : amount <= 500 ? 0.045 : amount <= 2000 ? 0.035 : 0.028;
+  }
+
+  function resolveServiceFeeProfile(serviceType, amount) {
+    const profile = serviceFeeProfiles[String(serviceType || "").trim()];
+    if (profile) {
+      return {
+        label: profile.label,
+        percent: profile.percent,
+        source: "service"
+      };
+    }
+
+    return {
+      label: "کارمزد پلکانی",
+      percent: tieredServiceFeePercent(amount),
+      source: "tiered"
+    };
+  }
+
+  function formatPercent(rate) {
+    return `${amountFormatter.format(rate * 100)}٪`;
+  }
+
+  function estimate(amount, urgent, currency, serviceType) {
     if (!Number.isFinite(amount) || amount <= 0) return null;
-    const percent = amount <= 100 ? 0.055 : amount <= 500 ? 0.045 : amount <= 2000 ? 0.035 : 0.028;
-    const serviceFee = Math.max(2, Math.round(amount * percent * 100) / 100);
+    const serviceFeeProfile = resolveServiceFeeProfile(serviceType, amount);
+    const serviceFee = Math.max(2, Math.round(amount * serviceFeeProfile.percent * 100) / 100);
     const urgentFee = urgent ? Math.max(5, Math.round(amount * 0.015 * 100) / 100) : 0;
     const total = Math.round((amount + serviceFee + urgentFee) * 100) / 100;
     return Math.round(total * rateFor(currency));
   }
 
-  function estimateDetails(amount, urgent, currency) {
+  function estimateDetails(amount, urgent, currency, serviceType) {
     const numericAmount = Number(amount);
     const normalizedCurrency = String(currency || "USD").toUpperCase();
     const rateToman = rateFor(normalizedCurrency);
-    const percent = numericAmount <= 100 ? 0.055 : numericAmount <= 500 ? 0.045 : numericAmount <= 2000 ? 0.035 : 0.028;
-    const serviceFee = Math.max(2, Math.round(numericAmount * percent * 100) / 100);
+    const serviceFeeProfile = resolveServiceFeeProfile(serviceType, numericAmount);
+    const serviceFee = Math.max(2, Math.round(numericAmount * serviceFeeProfile.percent * 100) / 100);
     const urgentFee = urgent ? Math.max(5, Math.round(numericAmount * 0.015 * 100) / 100) : 0;
     const totalAmount = Math.round((numericAmount + serviceFee + urgentFee) * 100) / 100;
     return {
@@ -58,6 +93,10 @@
       rateFetchedAt: rateState.fetchedAt || "",
       rateFallback: Boolean(rateState.fallback || rateState.stale),
       serviceFee,
+      serviceFeeRate: serviceFeeProfile.percent,
+      serviceFeeLabel: serviceFeeProfile.label,
+      serviceFeeSource: serviceFeeProfile.source,
+      serviceFeeRateText: formatPercent(serviceFeeProfile.percent),
       urgentFee,
       totalAmount,
       serviceFeeUsd: normalizedCurrency === "USD" ? serviceFee : undefined,
@@ -100,7 +139,7 @@
       ...safeData,
       amount: Number(data.amount),
       status: "new",
-      estimate: estimateDetails(Number(data.amount), Boolean(data.urgent), data.currency),
+      estimate: estimateDetails(Number(data.amount), Boolean(data.urgent), data.currency, data.serviceType),
       assignedTo: "",
       internalNote: "",
       createdAt: now,
@@ -162,13 +201,14 @@
     const amount = Number(form.elements.amount.value);
     const urgent = form.elements.urgent.checked;
     const currency = form.elements.currency.value;
-    const details = Number.isFinite(amount) && amount > 0 ? estimateDetails(amount, urgent, currency) : null;
+    const serviceType = form.elements.serviceType.value;
+    const details = Number.isFinite(amount) && amount > 0 ? estimateDetails(amount, urgent, currency, serviceType) : null;
     estimateText.textContent = details ? `${toman.format(details.estimatedToman)} تومان` : "مبلغ را وارد کنید";
     if (estimateHint) {
       if (details) {
         const baseToman = Math.round(amount * details.rateToman);
         const feeAmount = Math.round((details.serviceFee + details.urgentFee) * 100) / 100;
-        estimateHint.textContent = `${selectedRateText(currency)}؛ مبلغ پایه: ${toman.format(baseToman)} تومان؛ کارمزد: ${amountFormatter.format(feeAmount)} ${currency}.`;
+        estimateHint.textContent = `${selectedRateText(currency)}؛ ${details.serviceFeeLabel}: ${details.serviceFeeRateText}؛ مبلغ پایه: ${toman.format(baseToman)} تومان؛ کارمزد کل: ${amountFormatter.format(feeAmount)} ${currency}.`;
       } else {
         estimateHint.textContent = `${selectedRateText(currency)}؛ قیمت نهایی توسط اپراتور تایید می‌شود.`;
       }
@@ -220,7 +260,7 @@
   function updateSubmitAvailability() {
     if (!submitButton) return;
     submitButton.disabled = submitting;
-    submitButton.textContent = submitting ? "در حال ثبت..." : "ثبت درخواست";
+    submitButton.textContent = submitting ? "در حال ثبت..." : "ثبت درخواست و دریافت کد رهگیری";
   }
 
   function resetPhoneVerification(text = "") {
@@ -285,7 +325,8 @@
       const rateText = request.estimate?.rateToman
         ? ` با نرخ ${toman.format(request.estimate.rateToman)} تومان`
         : "";
-      setMessage(`درخواست شما با کد ${request.id} ثبت شد. برآورد نهایی${rateText}: ${toman.format(request.estimate.estimatedToman)} تومان.`, "success");
+      setMessage(`درخواست شما با کد ${request.id} ثبت شد. برآورد اولیه${rateText}: ${toman.format(request.estimate.estimatedToman)} تومان. قیمت نهایی بعد از بررسی پیامک می‌شود.`, "success");
+      window.arzrahTrackRequestSubmit?.(request);
       form.reset();
       resetPhoneVerification();
       setPhoneVerifyMessage("", "");
@@ -376,7 +417,7 @@
         if (!response.ok || !payload.ok) throw new Error(payload.error || "تایید شماره انجام نشد.");
         verifiedPhone = phone;
         form.elements.phoneVerificationToken.value = payload.phoneVerificationToken;
-        setPhoneVerifyMessage("شماره موبایل تایید شد. حالا می‌توانید درخواست را ثبت کنید.", "success");
+        setPhoneVerifyMessage("شماره موبایل تایید شد.", "success");
         updateSubmitAvailability();
       } catch (error) {
         resetPhoneVerification(error.message || "تایید شماره انجام نشد.");

@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>داشبورد ارزراه | مدیریت درخواست‌ها</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
-    <meta name="theme-color" content="#087b75">
-    <link rel="preload" href="assets/fonts/Estedad-Regular.ttf" as="font" type="font/ttf" crossorigin>
-    <link rel="stylesheet" href="styles.css?v=20260815-rate-detail">
+    <meta name="theme-color" content="#0f766e">
+    <link rel="preload" href="assets/fonts/Vazirmatn-Regular.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="styles.css?v=20260817-google-login">
   </head>
   <body class="dashboard-body">
     <header class="site-header dashboard-header">
@@ -15,44 +15,55 @@
         <span class="brand-mark" aria-hidden="true"><img src="logo-mark.svg" alt=""></span>
         <span>
           <strong>داشبورد ارزراه</strong>
-          <small>مدیریت درخواست‌های خرید دلاری</small>
+          <small>صف عملیات و قیمت‌گذاری</small>
         </span>
       </a>
       <nav class="top-nav" aria-label="ناوبری داشبورد">
         <a href="index.html">سایت</a>
         <a href="benchmark.html">بنچ‌مارک</a>
       </nav>
-      <button class="ghost-link button-link" id="logoutButton" type="button">خروج</button>
+      <div class="dashboard-account">
+        <span class="current-user is-hidden" id="currentUser"></span>
+        <button class="ghost-link button-link" id="logoutButton" type="button">خروج</button>
+      </div>
     </header>
 
     <main class="dashboard-shell">
       <section class="login-panel tool-panel" id="loginPanel" aria-labelledby="loginTitle">
         <div>
-          <p class="eyebrow">ورود مدیر</p>
-          <h1 id="loginTitle">ورود با کد پیامکی</h1>
-          <p>هر بار ورود، یک کد یک‌بارمصرف به شماره ادمین ارسال می‌شود.</p>
+          <p class="eyebrow">ورود امن مدیر</p>
+          <h1 id="loginTitle">ورود به داشبورد</h1>
+          <p>حساب‌های تعریف‌شده می‌توانند با گوگل وارد شوند؛ ورود پیامکی برای مالک پنل فعال می‌ماند.</p>
         </div>
-        <form id="loginForm" class="login-form">
-          <label>
-            <span>کد پیامکی</span>
-            <input name="code" type="password" inputmode="numeric" autocomplete="one-time-code" required placeholder="کد ۶ رقمی">
-          </label>
-          <div class="login-actions">
-            <button class="secondary-button" id="requestLoginCodeButton" type="button">ارسال کد</button>
-            <button class="primary-button" type="submit">ورود</button>
-          </div>
-          <p class="form-message" id="loginMessage" role="status"></p>
-        </form>
+        <div class="login-options">
+          <a class="google-login-button" id="googleLoginButton" href="/api/admin/google/start?returnTo=/dashboard">
+            <span aria-hidden="true">G</span>
+            ورود با گوگل
+          </a>
+          <p class="form-message" id="googleLoginNote" role="status"></p>
+          <div class="login-divider"><span>یا</span></div>
+          <form id="loginForm" class="login-form">
+            <label>
+              <span>کد پیامکی</span>
+              <input name="code" type="password" inputmode="numeric" autocomplete="one-time-code" required placeholder="کد ۶ رقمی">
+            </label>
+            <div class="login-actions">
+              <button class="secondary-button" id="requestLoginCodeButton" type="button">ارسال کد</button>
+              <button class="primary-button" type="submit">ورود</button>
+            </div>
+            <p class="form-message" id="loginMessage" role="status"></p>
+          </form>
+        </div>
       </section>
 
       <section class="dashboard-app is-hidden" id="dashboardApp" aria-labelledby="dashboardTitle">
         <div class="dashboard-title-row">
           <div>
-            <p class="eyebrow">نمای عملیاتی</p>
-            <h1 id="dashboardTitle">درخواست‌های ثبت‌شده</h1>
+            <p class="eyebrow">صف عملیات</p>
+            <h1 id="dashboardTitle">درخواست‌ها و قیمت‌گذاری</h1>
           </div>
           <div class="dashboard-actions">
-            <button class="secondary-button" id="refreshButton" type="button">به‌روزرسانی</button>
+            <button class="secondary-button" id="refreshButton" type="button">تازه‌سازی</button>
             <a class="primary-button" id="exportLink" href="#">خروجی CSV</a>
           </div>
         </div>
@@ -74,6 +85,32 @@
             <span>جمع ارزی</span>
             <strong id="statAmount">۰ USD</strong>
           </article>
+        </section>
+
+        <section class="staff-panel tool-panel is-hidden" id="staffPanel" aria-labelledby="staffTitle">
+          <div class="staff-head">
+            <div>
+              <p class="eyebrow">دسترسی تیم</p>
+              <h2 id="staffTitle">کارشناسان داشبورد</h2>
+            </div>
+          </div>
+          <form class="staff-form" id="staffForm">
+            <label>
+              <span>ایمیل گوگل</span>
+              <input name="email" type="email" autocomplete="email" required placeholder="name@gmail.com">
+            </label>
+            <label>
+              <span>نام</span>
+              <input name="firstName" autocomplete="given-name" required placeholder="نام">
+            </label>
+            <label>
+              <span>نام خانوادگی</span>
+              <input name="lastName" autocomplete="family-name" required placeholder="نام خانوادگی">
+            </label>
+            <button class="secondary-button" type="submit">ثبت کارشناس</button>
+          </form>
+          <p class="form-message" id="staffMessage" role="status"></p>
+          <div class="staff-list" id="staffList"></div>
         </section>
 
         <section class="dashboard-grid">
@@ -134,6 +171,7 @@
                 <div><dt>مبلغ</dt><dd id="detailAmount"></dd></div>
                 <div><dt>برآورد ریالی</dt><dd id="detailEstimate"></dd></div>
                 <div><dt>نرخ برآورد</dt><dd id="detailRate"></dd></div>
+                <div><dt>کارمزد سرویس</dt><dd id="detailServiceFee"></dd></div>
                 <div><dt>قیمت نهایی</dt><dd id="detailFinalPrice"></dd></div>
                 <div><dt>فوریت</dt><dd id="detailUrgent"></dd></div>
                 <div class="span-full"><dt>لینک مقصد</dt><dd><a id="detailUrl" href="#" target="_blank" rel="noopener"></a></dd></div>
@@ -189,6 +227,6 @@
       </section>
     </main>
 
-    <script src="dashboard.js?v=20260815-rate-detail" defer></script>
+    <script src="dashboard.js?v=20260817-google-login" defer></script>
   </body>
 </html>
